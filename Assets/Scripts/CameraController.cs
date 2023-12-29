@@ -12,6 +12,7 @@ public class CameraController : MonoBehaviour
     public GameObject[] camObject;
     public GameObject prefabDrone;
     public Transform gridLayout;
+    public Material[] tempMaterial;
     public bool spawned;
     void Start()
     {
@@ -20,6 +21,7 @@ public class CameraController : MonoBehaviour
         webCamTexture = new WebCamTexture[desiredCamera.Length];
         texture = new Texture2D[desiredCamera.Length];
         camObject = new GameObject[desiredCamera.Length];
+        tempMaterial = new Material[desiredCamera.Length];
         camObject[0] = this.gameObject;
         if (desiredCamera.Length > 0)
         {
@@ -50,24 +52,25 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.R))
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        }
         for (int index = 0; index < webCamTexture.Length; index++)
         {
+            tempMaterial[index] = new Material(camObject[0].GetComponent<Image>().material);
             if (camObject[index] != null)
             {
                 UpdateTexture(index);
-                camObject[index].GetComponent<Image>().material.mainTexture = texture[index];
+                tempMaterial[index].mainTexture = texture[index];
+                camObject[index].GetComponent<Image>().material = tempMaterial[index];
             }
             else
             {
+                // Создаем новый уникальный объект prefabDrone для каждой камеры
                 camObject[index] = Instantiate(prefabDrone);
                 camObject[index].transform.SetParent(gridLayout);
                 camObject[index].gameObject.transform.localScale = new Vector3(1, 1, 1);
+                camObject[index].GetComponent<Image>().material = tempMaterial[index];
+
+                spawned = true;  // Перенесено в блок else, чтобы устанавливаться только при создании нового объекта
             }
-            spawned = true;
         }
     }
     private void UpdateTexture(int index)
