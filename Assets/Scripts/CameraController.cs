@@ -1,19 +1,27 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using OpenCvSharp;
+using OpenCvSharp.Aruco;
+using System.Linq;
 
 public class CameraController : MonoBehaviour
 {
-    public WebCamTexture[] webCamTexture;
-    public Texture2D[] texture;
-    public GameObject[] camObject;
+    private WebCamTexture[] webCamTexture;
+    private Point2f[][] corners;
+    private int[] ids;
+    private Point2f[][] rejectedImgPoints;
+    private DetectorParameters detectorParameters = DetectorParameters.Create();
+    private Dictionary dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
+    private bool spawned;
+
     public GameObject prefabDrone;
     public Transform gridLayout;
-    public Material[] tempMaterial;
-    public bool spawned;
+    public Texture[] tempMaterial;
+    public GameObject[] camObject;
+    public Texture2D[] texture;
+
     void Start()
     {
         WebCamDevice[] devices = WebCamTexture.devices;
@@ -21,8 +29,9 @@ public class CameraController : MonoBehaviour
         webCamTexture = new WebCamTexture[desiredCamera.Length];
         texture = new Texture2D[desiredCamera.Length];
         camObject = new GameObject[desiredCamera.Length];
-        tempMaterial = new Material[desiredCamera.Length];
+        tempMaterial = new Texture[desiredCamera.Length];
         camObject[0] = this.gameObject;
+
         if (desiredCamera.Length > 0)
         {
             for (int index = 0; index < desiredCamera.Length; index++)
@@ -30,8 +39,36 @@ public class CameraController : MonoBehaviour
                 webCamTexture[index] = new WebCamTexture(desiredCamera[index].name);
                 webCamTexture[index].Play();
                 texture[index] = new Texture2D(webCamTexture[index].width, webCamTexture[index].height);
-
             }
+            StartCoroutine(UpdateImageRoutine(0));
+
+            // Новый код: Устанавливаем имя камеры в компонент Text на prefabDrone
+            Text cameraText = camObject[0].GetComponentInChildren<Text>();
+            if (cameraText != null)
+            {
+                cameraText.text = webCamTexture[0].deviceName;
+            }
+
+            spawned = true;
+        }
+    }
+
+    IEnumerator UpdateImageRoutine(int index)
+    {
+        while (true)
+        {
+            // CameraController
+            Mat mat = Unity.TextureToMat(webCamTexture[index]);
+            Mat grayMat = new Mat();
+            Cv2.CvtColor(mat, grayMat, ColorConversionCodes.BGR2GRAY);
+            CvAruco.DetectMarkers(grayMat, dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
+            CvAruco.DrawDetectedMarkers(mat, corners, ids);
+            texture[index] = Unity.MatToTexture(mat);
+            camObject[index].GetComponent<RawImage>().texture = texture[index];
+            mat.Dispose();
+            grayMat.Dispose();
+            // MarkerDetector
+            yield return null;
         }
     }
 
@@ -54,12 +91,10 @@ public class CameraController : MonoBehaviour
     {
         for (int index = 0; index < webCamTexture.Length; index++)
         {
-            tempMaterial[index] = new Material(camObject[0].GetComponent<Image>().material);
             if (camObject[index] != null)
             {
-                UpdateTexture(index);
-                tempMaterial[index].mainTexture = texture[index];
-                camObject[index].GetComponent<Image>().material = tempMaterial[index];
+                StartCoroutine(UpdateImageRoutine(index));
+                OnDestroys();
             }
             else
             {
@@ -67,16 +102,21 @@ public class CameraController : MonoBehaviour
                 camObject[index] = Instantiate(prefabDrone);
                 camObject[index].transform.SetParent(gridLayout);
                 camObject[index].gameObject.transform.localScale = new Vector3(1, 1, 1);
-                camObject[index].GetComponent<Image>().material = tempMaterial[index];
-
                 spawned = true;  // Перенесено в блок else, чтобы устанавливаться только при создании нового объекта
             }
         }
     }
-    private void UpdateTexture(int index)
+
+    private void OnDestroys()
     {
-        Color32[] colors = webCamTexture[index].GetPixels32();
-        texture[index].SetPixels32(colors);
-        texture[index].Apply();
+        // Освобождаем ресурсы при уничтожении объекта
+        foreach (var tex in texture)
+        {
+            Destroy(tex);
+        }
+        foreach (var mat in tempMaterial)
+        {
+            Destroy(mat);
+        }
     }
 }
