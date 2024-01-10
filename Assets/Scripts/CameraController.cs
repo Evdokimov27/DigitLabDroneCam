@@ -11,17 +11,14 @@ using Unity.VisualScripting;
 using static OpenCvSharp.Tracking.Tracker;
 
 //* Created by Evdokimov # ObederTeam # DigitLab *//
-
+[Serializable]
 public class CameraController : MonoBehaviour
 {
-    private List<WebCamTexture> webCamTexture;
-    private Point2f[][] corners;
-    private int[] ids;
-    private Point2f[][] rejectedImgPoints;
-    private DetectorParameters detectorParameters = DetectorParameters.Create();
-    private Dictionary dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
-    private bool spawned;
-
+    [Header("Настройки")]
+    public SettingsRace settings;
+    [Header("Включить видео с DroidCam")] 
+    public bool droidCam;
+    [Header("Параметры")]
     public GameObject prefabDrone;
     public Transform gridLayout;
     public GameObject[] camObject;
@@ -29,12 +26,23 @@ public class CameraController : MonoBehaviour
     public float[] lastMarkerDetectionTime;
     public float markerClearTime;
     public float currentTime;
-    public int count;
+
+
+    //
+    private List<WebCamTexture> webCamTexture;
+    private Point2f[][] corners;
+    private int[] ids;
+    private Point2f[][] rejectedImgPoints;
+    private DetectorParameters detectorParameters = DetectorParameters.Create();
+    private Dictionary dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
+    private bool spawned;
+    //
     void Start()
     {
+        settings.circles = 0;
         WebCamDevice[] devices = WebCamTexture.devices;
         List<WebCamDevice> desiredCamera = FindCameraByName(devices, "USB2.0 PC CAMERA");
-        if (FindCameraByName(devices, "DroidCam Source 3").Count > 0)
+        if (droidCam && FindCameraByName(devices, "DroidCam Source 3").Count > 0)
         {
             desiredCamera.Add(FindCameraByName(devices, "DroidCam Source 3")[0]);
         }
@@ -138,4 +146,19 @@ public class CameraController : MonoBehaviour
         }
         return listCam;
     }
+}
+[Serializable]
+public enum TypeRace
+{
+    Круг,
+    Драг,
+    Время
+};
+[Serializable]
+public class SettingsRace
+{
+    [Header("Тип заезда")]
+    public TypeRace type;
+    [Header("Кол-во кругов")]
+    public int circles;
 }
