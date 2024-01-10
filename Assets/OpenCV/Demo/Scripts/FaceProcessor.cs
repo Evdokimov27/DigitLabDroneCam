@@ -148,12 +148,12 @@
         /// <param name="texture">Texture instance, must be either Texture2D or WbCamTexture</param>
         /// <returns>Newely created Mat object, ready to use with OpenCV</returns>
         /// <param name="texParams">Texture parameters (flipped, rotated etc.)</param>
-        protected virtual Mat MatFromTexture(T texture, Unity.TextureConversionParams texParams)
+        protected virtual Mat MatFromTexture(T texture, UnityCV.TextureConversionParams texParams)
         {
             if (texture is UnityEngine.Texture2D)
-                return Unity.TextureToMat(texture as UnityEngine.Texture2D, texParams);
+                return UnityCV.TextureToMat(texture as UnityEngine.Texture2D, texParams);
             else if (texture is UnityEngine.WebCamTexture)
-                return Unity.TextureToMat(texture as UnityEngine.WebCamTexture, texParams);
+                return UnityCV.TextureToMat(texture as UnityEngine.WebCamTexture, texParams);
             else
                 throw new Exception("FaceProcessor: incorrect input texture type, must be Texture2D or WebCamTexture");
         }
@@ -164,7 +164,7 @@
         /// </summary>
         /// <param name="texture">Input texture</param>
         /// <param name="texParams">Texture parameters (flipped, rotated etc.)</param>
-        protected virtual void ImportTexture(T texture, Unity.TextureConversionParams texParams)
+        protected virtual void ImportTexture(T texture, UnityCV.TextureConversionParams texParams)
         {
             // free currently used textures
             if (null != processingImage)
@@ -211,7 +211,7 @@
         /// <param name="inputTexture">Input Unity texture</param>
         /// <param name="texParams">Texture parameters (flipped, rotated etc.)</param>
         /// <param name="detect">Flag signalling whether we need detection on this frame</param>
-        public virtual void ProcessTexture(T texture, Unity.TextureConversionParams texParams, bool detect = true)
+        public virtual void ProcessTexture(T texture, UnityCV.TextureConversionParams texParams, bool detect = true)
         {
             // convert Unity texture to OpenCv::Mat
             ImportTexture(texture, texParams);
@@ -349,7 +349,7 @@
         /// <param name="inputTexture">Input Unity texture</param>
         /// <param name="texParams">Texture parameters (flipped, rotated etc.)</param>
         /// <param name="detect">Flag signalling whether we need detection on this frame</param>
-        public override void ProcessTexture(T texture, Unity.TextureConversionParams texParams,  bool detect = true)
+        public override void ProcessTexture(T texture, UnityCV.TextureConversionParams texParams,  bool detect = true)
         {
             bool acceptedFrame = (0 == Performance.SkipRate || 0 == frameCounter++ % Performance.SkipRate);
             base.ProcessTexture(texture, texParams, detect && acceptedFrame);

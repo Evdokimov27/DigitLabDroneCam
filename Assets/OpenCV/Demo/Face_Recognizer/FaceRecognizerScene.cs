@@ -49,12 +49,12 @@
 				{
 					var bytes = File.ReadAllBytes(file);
 					var texture = new UnityEngine.Texture2D(2, 2);
-					texture.LoadImage(bytes); // <--- this one has changed in Unity 2017 API and on that version must be changed
+					texture.LoadImage(bytes); // <--- this one has changed in UnityCV 2017 API and on that version must be changed
 
 					ids.Add(id);
 
 					// each loaded texture is converted to OpenCV Mat, turned to grayscale (assuming we have RGB source) and resized
-					var mat = Unity.TextureToMat(texture);
+					var mat = UnityCV.TextureToMat(texture);
 					mat = mat.CvtColor(ColorConversionCodes.BGR2GRAY);
 					if (requiredSize.Width > 0 && requiredSize.Height > 0)
 						mat = mat.Resize(requiredSize);
@@ -106,7 +106,7 @@
 		void Start()
 		{
 			// convert texture to cv image
-			Mat image = Unity.TextureToMat(this.sample);
+			Mat image = UnityCV.TextureToMat(this.sample);
 			
 			// Detect faces
 			var gray = image.CvtColor(ColorConversionCodes.BGR2GRAY);
@@ -153,7 +153,7 @@
 			}
 
 			// Render texture
-			var texture = Unity.MatToTexture(image);
+			var texture = UnityCV.MatToTexture(image);
 			var rawImage = gameObject.GetComponent<UnityEngine.UI.RawImage>();
 			rawImage.texture = texture;
 

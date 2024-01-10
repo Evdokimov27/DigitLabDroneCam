@@ -14,7 +14,7 @@
 		// Our sketch generation function
 		protected override bool ProcessTexture(WebCamTexture input, ref Texture2D output)
 		{
-			Mat img = Unity.TextureToMat(input, TextureParameters);
+			Mat img = UnityCV.TextureToMat(input, TextureParameters);
 
 			//Convert image to grayscale
 			Mat imgGray = new Mat ();
@@ -34,7 +34,7 @@
 
 			// result, passing output texture as parameter allows to re-use it's buffer
 			// should output texture be null a new texture will be created
-			output = Unity.MatToTexture(mask, output);
+			output = UnityCV.MatToTexture(mask, output);
 			return true;
 		}
 	}

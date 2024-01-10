@@ -4,7 +4,7 @@ using OpenCvSharp;
 using System;
 using System.Runtime.InteropServices;
 
-public class Unity
+public class UnityCV
 {
 
 	/// <summary>

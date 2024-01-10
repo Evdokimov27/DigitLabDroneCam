@@ -10,7 +10,7 @@ namespace OpenCvSharp.Demo
 	/// <summary>
 	/// Base WebCamera class that takes care about video capturing.
 	/// Is intended to be sub-classed and partially overridden to get
-	/// desired behavior in the user Unity script
+	/// desired behavior in the user UnityCV script
 	/// </summary>
 	public abstract class WebCamera: MonoBehaviour
 	{
@@ -31,7 +31,7 @@ namespace OpenCvSharp.Demo
 		/// <summary>
 		/// WebCam texture parameters to compensate rotations, flips etc.
 		/// </summary>
-		protected Unity.TextureConversionParams TextureParameters { get; private set; }
+		protected UnityCV.TextureConversionParams TextureParameters { get; private set; }
 
 		/// <summary>
 		/// Camera device name, full list can be taken from WebCamTextures.devices enumerator
@@ -83,7 +83,7 @@ namespace OpenCvSharp.Demo
 		/// </summary>
 		private void ReadTextureConversionParameters()
 		{
-			Unity.TextureConversionParams parameters = new Unity.TextureConversionParams();
+			UnityCV.TextureConversionParams parameters = new UnityCV.TextureConversionParams();
 
 			// frontal camera - we must flip around Y axis to make it mirror-like
 			parameters.FlipHorizontally = forceFrontalCamera || webCamDevice.Value.isFrontFacing;

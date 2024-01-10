@@ -78,7 +78,7 @@
 		/// <returns></returns>
 		protected override bool ProcessTexture(WebCamTexture input, ref Texture2D output)
 		{
-			Mat image = Unity.TextureToMat(input, TextureParameters);
+			Mat image = UnityCV.TextureToMat(input, TextureParameters);
 			Mat downscaled = image.Resize(Size.Zero, downScale, downScale);
 
 			// screen space -> image space
@@ -129,7 +129,7 @@
 
 			// result, passing output texture as parameter allows to re-use it's buffer
 			// should output texture be null a new texture will be created
-			output = Unity.MatToTexture(image, output);
+			output = UnityCV.MatToTexture(image, output);
 			return true;
 		}
 

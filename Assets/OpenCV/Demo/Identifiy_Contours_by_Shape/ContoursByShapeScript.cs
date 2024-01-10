@@ -13,7 +13,7 @@
 		// Use this for initialization
 		void Start () {
 			//Load texture
-			Mat image = Unity.TextureToMat (this.texture);
+			Mat image = UnityCV.TextureToMat (this.texture);
 
 			//Gray scale image
 			Mat grayMat = new Mat();
@@ -70,7 +70,7 @@
 			
 			
 			// Render texture
-			Texture2D texture = Unity.MatToTexture (image);
+			Texture2D texture = UnityCV.MatToTexture (image);
 			RawImage rawImage = gameObject.GetComponent<RawImage> ();
 			rawImage.texture = texture;
 

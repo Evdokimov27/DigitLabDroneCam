@@ -73,7 +73,7 @@
 
 			// process input with PaperScanner
 			Mat result = null;
-			scanner.Input = Unity.TextureToMat(inputTexture);
+			scanner.Input = UnityCV.TextureToMat(inputTexture);
 
 			// should we fail, there is second try - HSV might help to detect paper by color difference
 			if (!scanner.Success)
@@ -84,7 +84,7 @@
 			result = CombineMats(scanner.Input, scanner.Output, scanner.PaperShape);
 
 			// apply result or source (late for a failed scan)
-			rawImage.texture = Unity.MatToTexture(result);
+			rawImage.texture = UnityCV.MatToTexture(result);
 
 			var transform = gameObject.GetComponent<RectTransform>();
 			transform.sizeDelta = new Vector2(result.Width, result.Height);

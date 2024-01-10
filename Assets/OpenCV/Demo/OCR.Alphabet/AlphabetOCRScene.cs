@@ -22,7 +22,7 @@
 			AlphabetOCR alphabet = new AlphabetOCR(model.bytes);
 
 			// scan image
-			var image = Unity.TextureToMat(this.texture);
+			var image = UnityCV.TextureToMat(this.texture);
 			IList<AlphabetOCR.RecognizedLetter> letters = alphabet.ProcessImage(image);
 			foreach (var letter in letters)
 			{
@@ -46,7 +46,7 @@
 			}
 
 			// result
-			UnityEngine.Texture2D texture = Unity.MatToTexture(image);
+			UnityEngine.Texture2D texture = UnityCV.MatToTexture(image);
 
 			// output
 			RawImage rawImage = gameObject.GetComponent<RawImage>();

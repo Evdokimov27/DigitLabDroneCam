@@ -28,7 +28,7 @@
 				string errorMessage =
 					"In order to have Face Landmarks working you must download special pre-trained shape predictor " +
 					"available for free via DLib library website and replace a placeholder file located at " +
-					"\"OpenCV+Unity/Assets/Resources/shape_predictor_68_face_landmarks.bytes\"\n\n" +
+					"\"OpenCV+UnityCV/Assets/Resources/shape_predictor_68_face_landmarks.bytes\"\n\n" +
 					"Without shape predictor demo will only detect face rects.";
 
 #if UNITY_EDITOR
@@ -65,7 +65,7 @@
 			processor.MarkDetected();
 
 			// processor.Image now holds data we'd like to visualize
-			output = Unity.MatToTexture(processor.Image, output);   // if output is valid texture it's buffer will be re-used, otherwise it will be re-created
+			output = UnityCV.MatToTexture(processor.Image, output);   // if output is valid texture it's buffer will be re-used, otherwise it will be re-created
 
 			return true;
 		}

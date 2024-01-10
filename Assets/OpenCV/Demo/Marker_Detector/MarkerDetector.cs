@@ -17,7 +17,7 @@
             DetectorParameters detectorParameters = DetectorParameters.Create();
 
             // Словарь содержит набор всех доступных маркеров
-            Dictionary dictionary = CvAruco.GetPredefinedDictionary (PredefinedDictionaryName.Dict6X6_250);
+            Dictionary dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
 
             // Создаем WebCamTexture
             webCamTexture = new WebCamTexture();
@@ -36,7 +36,7 @@
         IEnumerator UpdateImageRoutine(RawImage rawImage, DetectorParameters detectorParameters, Dictionary dictionary) {
             while (true) {
                 // Создаем Mat из текущего кадра WebCamTexture
-                Mat mat = Unity.TextureToMat(webCamTexture);
+                Mat mat = UnityCV.TextureToMat(webCamTexture);
 
                 // Конвертируем изображение в оттенки серого
                 Mat grayMat = new Mat();
@@ -46,8 +46,8 @@
                 CvAruco.DetectMarkers(grayMat, dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
                 CvAruco.DrawDetectedMarkers(mat, corners, ids);
 
-                // Создаем Unity текстуру с обнаруженными маркерами
-                Texture2D outputTexture = Unity.MatToTexture(mat);
+                // Создаем UnityCV текстуру с обнаруженными маркерами
+                Texture2D outputTexture = UnityCV.MatToTexture(mat);
 
                 // Устанавливаем текстуру, чтобы увидеть результат
                 rawImage.texture = outputTexture;
