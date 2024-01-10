@@ -549,6 +549,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25b1f84dab2ea7f4e93ae7723601d20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  settings:
+    type: 1
+    circles: 0
+  droidCam: 0
   prefabDrone: {fileID: 6491623201905248511, guid: e260f3d2caf6c9a4795ff4162e484716, type: 3}
   gridLayout: {fileID: 1333808759}
   camObject: []
@@ -556,7 +560,6 @@ MonoBehaviour:
   lastMarkerDetectionTime: []
   markerClearTime: 1
   currentTime: 0
-  count: 1
   currentBool: 0
 --- !u!114 &356213502058590658
 MonoBehaviour:
