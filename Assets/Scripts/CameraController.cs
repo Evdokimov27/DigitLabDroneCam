@@ -9,11 +9,14 @@ using System.Linq;
 using System;
 using Unity.VisualScripting;
 using static OpenCvSharp.Tracking.Tracker;
+using System.Collections;
 
 //* Created by Evdokimov # ObederTeam # DigitLab *//
 [Serializable]
 public class CameraController : MonoBehaviour
 {
+    [Header("Гонка")]
+    public ResultRace[] result;
     [Header("Настройки")]
     public SettingsRace settings;
     [Header("Включить видео с DroidCam")] 
@@ -26,8 +29,8 @@ public class CameraController : MonoBehaviour
     public float[] lastMarkerDetectionTime;
     public float markerClearTime;
     public float currentTime;
-
-
+    public Mat[] mat;
+    public Mat[] grayMat;
     //
     private List<WebCamTexture> webCamTexture;
     private Point2f[][] corners;
@@ -36,6 +39,7 @@ public class CameraController : MonoBehaviour
     private DetectorParameters detectorParameters = DetectorParameters.Create();
     private Dictionary dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
     private bool spawned;
+    private bool endStart = false;
     //
     void Start()
     {
@@ -46,9 +50,12 @@ public class CameraController : MonoBehaviour
         {
             desiredCamera.Add(FindCameraByName(devices, "DroidCam Source 3")[0]);
         }
+        result = new ResultRace[desiredCamera.Count];
         webCamTexture = new List<WebCamTexture>();
         camObject = new GameObject[desiredCamera.Count];
         cameraText = new TMP_Text[desiredCamera.Count];
+        mat = new Mat[desiredCamera.Count];
+        grayMat= new Mat[desiredCamera.Count];
         lastMarkerDetectionTime = new float[desiredCamera.Count];
 
         if (desiredCamera.Count > 0)
@@ -62,25 +69,35 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    async void UpdateImage(int index)
+    void UpdateImage(int index)
     {
-        cameraText[index] = camObject[index].GetComponentInChildren<TMP_Text>();
         if (cameraText[index] != null)
         {
+            webCamTexture[index].deviceName = "Дрон " + (index+1);
             cameraText[index].text = webCamTexture[index].deviceName;
+            camObject[index].name = webCamTexture[index].deviceName;
         }
-        Mat mat = UnityCV.TextureToMat(webCamTexture[index]);
-        Mat grayMat = new Mat();
-        await Task.Run(() => CheckMarkAsync(mat, grayMat, index));
+        cameraText[index] = camObject[index].GetComponentInChildren<TMP_Text>();
+        mat[index] = UnityCV.TextureToMat(webCamTexture[index]);
+        grayMat[index] = new Mat();
+        if(endStart) CheckMarkAsync(index);
         // Update the RawImage texture with the modified Mat
-        camObject[index].GetComponent<RawImage>().texture = UnityCV.MatToTexture(mat);
+        camObject[index].GetComponent<RawImage>().texture = UnityCV.MatToTexture(mat[index]);
         Resources.UnloadUnusedAssets();
-
     }
 
     void Update()
     {
-        currentTime = Time.time;
+
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            endStart = true;
+        }
+        if (endStart)
+        {
+            currentTime += Time.deltaTime;
+            Time.timeScale = 1;
+        }
         for (int index = 0; index < webCamTexture.Count; index++)
         {
             if (camObject[index] == null)
@@ -97,42 +114,46 @@ public class CameraController : MonoBehaviour
             }
         }
     }
-    static bool CheckPairs(int[] ids)
+    bool CheckPairs(int[] ids)
     {
         bool boolean = false;
-        if (ids.Length > 0)
+        if (ids.Length >= settings.marker)
         {
-            var groupedIds = ids.GroupBy(x => x);
-            boolean = groupedIds.All(group => group.Count() % 2 == 0);
+            boolean = true;
         }
         return boolean;
     }
     public bool currentBool;
-    async Task CheckMarkAsync(Mat mat, Mat grayMat, int index)
+    void CheckMarkAsync(int index)
     {
+        var res = result[index];
+        Cv2.CvtColor(mat[index], grayMat[index], ColorConversionCodes.BGR2GRAY);
+        CvAruco.DetectMarkers(grayMat[index], dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
+        CvAruco.DrawDetectedMarkers(mat[index], corners, ids);
 
-        await Task.Run(() =>
+        if (CheckPairs(ids))
         {
-            Cv2.CvtColor(mat, grayMat, ColorConversionCodes.BGR2GRAY);
-            CvAruco.DetectMarkers(grayMat, dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
-            CvAruco.DrawDetectedMarkers(mat, corners, ids);
+            lastMarkerDetectionTime[index] = currentTime;
+            currentBool = true;
+        }
 
-            if (CheckPairs(ids))
-            {
-                lastMarkerDetectionTime[index] = currentTime;
-                currentBool = true;
-            }
 
-            if (currentBool)
+        if (currentBool && currentTime - lastMarkerDetectionTime[index] < markerClearTime)
+        {
+            Debug.Log(webCamTexture[index].deviceName + " обнаружил метку");
+            if (ids.Length < 1)
             {
-                if (currentTime - lastMarkerDetectionTime[index] < markerClearTime)
+                currentBool = false;
+                Debug.Log(webCamTexture[index].deviceName + " прошел круг");
+                res.allTime = currentTime;
+                if (res.currentTime.Count < 1) res.currentTime.Add(currentTime);
+                else
                 {
-                    Debug.Log("Дрон обнаружил метку");
+                    var time = res.allTime - res.currentTime[res.currentTime.Count-1];
+                    res.currentTime.Add(time);
                 }
             }
-
-
-        });
+        }
     }
     private List<WebCamDevice> FindCameraByName(WebCamDevice[] devices, string cameraName)
     {
@@ -157,8 +178,18 @@ public enum TypeRace
 [Serializable]
 public class SettingsRace
 {
+    [Header("Кол-во маркеров для отметки")]
+    public int marker;
     [Header("Тип заезда")]
     public TypeRace type;
     [Header("Кол-во кругов")]
     public int circles;
+}
+[Serializable]
+public class ResultRace
+{
+    [Header("Время круга/трассы")]
+    public List<float> currentTime = new List<float>();
+    [Header("Общее время")]
+    public float allTime;
 }
