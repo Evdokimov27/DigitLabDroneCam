@@ -10,6 +10,7 @@ using System;
 using Unity.VisualScripting;
 using static OpenCvSharp.Tracking.Tracker;
 using System.Collections;
+using UnityEngine.UIElements;
 
 //* Created by Evdokimov # ObederTeam # DigitLab *//
 [Serializable]
@@ -19,6 +20,7 @@ public class CameraController : MonoBehaviour
     public ResultRace[] result;
     [Header("Настройки")]
     public SettingsRace settings;
+    public TMP_Text timer;
     [Header("Включить видео с DroidCam")] 
     public bool droidCam;
     [Header("Параметры")]
@@ -68,7 +70,29 @@ public class CameraController : MonoBehaviour
             spawned = true;
         }
     }
+    IEnumerator StartTimer()
+    {
+        if (!endStart)
+        {
+            for(; settings.timerStart > 0; settings.timerStart--)
+            {
+                timer.text = settings.timerStart.ToString();
+                yield return new WaitForSeconds(1);
+            }
+            timer.text = "Полетел!";
 
+            yield return new WaitForSeconds(1);
+
+            endStart = true;
+        }
+        while (endStart)
+        {
+            currentTime += Time.deltaTime;
+            Time.timeScale = 1;
+            timer.text = currentTime.ToString().Substring(0,4) + " сек.";
+            yield return new WaitForSeconds(0.01f);
+        }
+    }
     void UpdateImage(int index)
     {
         if (cameraText[index] != null)
@@ -91,13 +115,9 @@ public class CameraController : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.Space))
         {
-            endStart = true;
+            StartCoroutine(StartTimer());
         }
-        if (endStart)
-        {
-            currentTime += Time.deltaTime;
-            Time.timeScale = 1;
-        }
+
         for (int index = 0; index < webCamTexture.Count; index++)
         {
             if (camObject[index] == null)
@@ -180,6 +200,8 @@ public class SettingsRace
 {
     [Header("Кол-во маркеров для отметки")]
     public int marker;
+    [Header("Отсчет до старта (в сек.)")]
+    public int timerStart;
     [Header("Тип заезда")]
     public TypeRace type;
     [Header("Кол-во кругов")]
