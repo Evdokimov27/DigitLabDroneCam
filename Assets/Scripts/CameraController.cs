@@ -190,7 +190,7 @@ public class CameraController : MonoBehaviour
     {
         isCoroutineRunning = true;
 
-        yield return new WaitForSeconds(markerClearTime * 2);
+        yield return new WaitForSeconds(0.2f);
 
         bool allMarksStillDetected = true;
 
@@ -212,6 +212,7 @@ public class CameraController : MonoBehaviour
             {
                 Debug.Log("круг пройден");
                 result[index].currentTime.Add(elapsedTime.TotalSeconds);
+                result[index].allTime = +result[index].currentTime[result[index].currentTime.Count-1];
             }
         }
 
@@ -255,5 +256,5 @@ public class SettingsRace
 public class ResultRace
 {
     public List<double> currentTime = new List<double>();
-    public float allTime;
+    public double allTime;
 }

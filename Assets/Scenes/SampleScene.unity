@@ -667,9 +667,9 @@ MonoBehaviour:
   droidCam: 1
   prefabDrone: {fileID: 6491623201905248511, guid: e260f3d2caf6c9a4795ff4162e484716, type: 3}
   gridLayout: {fileID: 1333808759}
-  markerClearTime: 0.2
+  markerClearTime: 1
   markerDetectedVisible: 
-  checkTrue: 1
+  checkTrue: 0
 --- !u!4 &356213502058590657
 Transform:
   m_ObjectHideFlags: 0
