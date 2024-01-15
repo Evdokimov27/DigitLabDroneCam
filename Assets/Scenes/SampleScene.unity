@@ -655,9 +655,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25b1f84dab2ea7f4e93ae7723601d20a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  result: []
+  result:
+  - currentTime: []
+    allTime: 0
   settings:
-    marker: 2
+    marker: 4
     timerStart: 1
     type: 1
     circles: 0
@@ -665,12 +667,9 @@ MonoBehaviour:
   droidCam: 1
   prefabDrone: {fileID: 6491623201905248511, guid: e260f3d2caf6c9a4795ff4162e484716, type: 3}
   gridLayout: {fileID: 1333808759}
-  camObject: []
-  cameraText: []
-  lastMarkerDetectionTime: []
-  markerClearTime: 1
-  currentTime: 0
-  currentBool: 0
+  markerClearTime: 0.2
+  markerDetectedVisible: 
+  checkTrue: 1
 --- !u!4 &356213502058590657
 Transform:
   m_ObjectHideFlags: 0
