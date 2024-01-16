@@ -10,6 +10,7 @@ using System.Linq;
 using OpenCvSharp.Demo;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using OpenCvSharp.Flann;
 
 //* Created by Evdokimov # ObederTeam # DigitLab *//
 [Serializable]
@@ -18,6 +19,7 @@ public class CameraController : MonoBehaviour
     public ResultRace[] result;
     public SettingsRace settings;
     public TMP_Text timer;
+    public TMP_Text raceText;
     public bool droidCam;
     public GameObject prefabDrone;
     public Transform gridLayout;
@@ -25,6 +27,7 @@ public class CameraController : MonoBehaviour
     public Dictionary<int, bool> markerDetected;
     public bool[] markerDetectedVisible;
     public bool checkTrue;
+    public RaceStage raceStage = RaceStage.NotStarted;
 
     private List<WebCamTexture> webCamTexture;
     private Point2f[][] corners;
@@ -40,9 +43,11 @@ public class CameraController : MonoBehaviour
     private Mat[] mat;
     private Mat[] grayMat;
     private bool isCoroutineRunning = false;
+    private bool resultsShown = false;
 
     public DateTime startTime;
     public TimeSpan elapsedTime;
+    public double currentElapsedTime;
 
     void Start()
     {
@@ -78,32 +83,40 @@ public class CameraController : MonoBehaviour
             }
             spawned = true;
             markerDetectedVisible = new bool[markerDetected.Keys.Count];
+
         }
 
     }
-
-    IEnumerator StartTimer()
+    IEnumerator StartCountdown()
     {
+        var timerVar = settings.timerStart;
         if (!endStart)
         {
-            for (; settings.timerStart > 0; settings.timerStart--)
+            for (; timerVar > 0; timerVar--)
             {
-                timer.text = settings.timerStart.ToString();
+                timer.text = timerVar.ToString();
                 yield return new WaitForSeconds(1);
             }
             timer.text = "Полетел!";
             yield return new WaitForSeconds(1);
             endStart = true;
             startTime = DateTime.Now;
+            raceStage = RaceStage.Countdown;
         }
-
+        raceStage = RaceStage.Racing;
         while (endStart)
         {
             elapsedTime = DateTime.Now - startTime;
+            currentElapsedTime = elapsedTime.TotalSeconds;
             timer.text = elapsedTime.ToString(@"hh\:mm\:ss\:fff");
+            if (raceStage == RaceStage.Finished)
+            {
+                break;
+            }
             yield return null;
         }
     }
+    
 
     void UpdateImage(int index)
     {
@@ -125,13 +138,71 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        for(int i = 0; i < markerDetected.Count; i++)
-        {
-            markerDetectedVisible[i] = markerDetected[i];
+
+
+            for (int i = 0; i < markerDetected.Count; i++)
+            {
+                markerDetectedVisible[i] = markerDetected[i];
+            }
+            if (Input.GetKeyUp(KeyCode.Space))
+            {
+                // Обработка нажатия пробела в зависимости от текущего этапа гонки
+            switch (raceStage)
+            {
+                case RaceStage.NotStarted:
+                    StartCoroutine(StartCountdown());
+
+                    break;
+                case RaceStage.Racing:
+                    ShowResults();
+                    break;
+                case RaceStage.Finished:
+                    RestartRace();
+                    break;
+            }
         }
-        if (Input.GetKeyUp(KeyCode.Space))
+        void ShowResults()
         {
-            StartCoroutine(StartTimer());
+            // Вывод результатов
+            if (!resultsShown)
+            {
+                // ... (ваш существующий код для вывода результатов)
+                resultsShown = true;
+
+                // Переключаем этап на завершенный
+                raceStage = RaceStage.Finished;
+            }
+        }
+        void RestartRace()
+        {
+            // Перезапуск гонки
+
+            // Сброс всех необходимых переменных и состояний
+            endStart = false;
+            startTime = DateTime.MinValue;
+            elapsedTime = TimeSpan.Zero;
+            // Очистка результатов гонки
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i].currentTime.Clear();
+                result[i].allTime = 0;
+            }
+
+
+            // Пересоздание необходимых объектов
+            for (int i = 0; i < webCamTexture.Count; i++)
+            {
+                Destroy(camObject[i]);
+                camObject[i] = null;
+            }
+
+            // Сброс флагов
+            spawned = false;
+            isCoroutineRunning = false;
+            resultsShown = false;
+
+            // Переключение этапа на не начатый
+            raceStage = RaceStage.NotStarted;
         }
 
         for (int index = 0; index < webCamTexture.Count; index++)
@@ -152,7 +223,6 @@ public class CameraController : MonoBehaviour
     }
     void CheckMarkAsync(int index)
     {
-        var res = result[index];
         Cv2.CvtColor(mat[index], grayMat[index], ColorConversionCodes.BGR2GRAY);
         CvAruco.DetectMarkers(grayMat[index], dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
         CvAruco.DrawDetectedMarkers(mat[index], corners, ids);
@@ -198,7 +268,9 @@ public class CameraController : MonoBehaviour
         {
             allMarksStillDetected = allMarksStillDetected && markerDetected[i];
         }
+        
 
+        
         if (allMarksStillDetected)
         {
             yield return new WaitForSeconds(markerClearTime);
@@ -210,9 +282,19 @@ public class CameraController : MonoBehaviour
 
             if (allMarksStillDetected)
             {
-                Debug.Log("круг пройден");
-                result[index].currentTime.Add(elapsedTime.TotalSeconds);
-                result[index].allTime = +result[index].currentTime[result[index].currentTime.Count-1];
+                allMarksStillDetected = false;
+                if (result[index].currentTime.Count > 0)
+                {
+                    double currentTimeForCurrentLap = elapsedTime.TotalSeconds - result[index].allTime;
+                    result[index].currentTime.Add(currentTimeForCurrentLap);
+                    result[index].allTime = result[index].currentTime.Sum();
+                }
+                else
+                {
+                    result[index].currentTime.Add(elapsedTime.TotalSeconds);
+                    result[index].allTime = result[index].currentTime.Sum();
+                }
+                raceText.text = "Время кругов:\n " +result[index].GetTimeSummary();
             }
         }
 
@@ -238,11 +320,19 @@ public class CameraController : MonoBehaviour
 [Serializable]
 public enum TypeRace
 {
-    Круг,
-    Драг,
-    Время
+    Circle,
+    Drag,
+    Timeout
 };
 
+[Serializable]
+public enum RaceStage
+{
+    NotStarted,
+    Countdown,
+    Racing,
+    Finished
+}
 [Serializable]
 public class SettingsRace
 {
@@ -257,4 +347,13 @@ public class ResultRace
 {
     public List<double> currentTime = new List<double>();
     public double allTime;
+    public string GetTimeSummary()
+    {
+        string timeSummary = "";
+        for (int i = 0; i < currentTime.Count; i++)
+        {
+            timeSummary += $"Круг {(i+1)}: {currentTime[i]} \n";
+        }
+        return timeSummary;
+    }
 }
