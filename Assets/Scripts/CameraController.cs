@@ -20,6 +20,7 @@ public class CameraController : MonoBehaviour
     public SettingsRace settings;
     public TMP_Text timer;
     public TMP_Text raceText;
+    public TMP_Text errorText;
     public bool droidCam;
     public GameObject prefabDrone;
     public Transform gridLayout;
@@ -51,42 +52,49 @@ public class CameraController : MonoBehaviour
 
     void Start()
     {
-        settings.circles = 0;
-        WebCamDevice[] devices = WebCamTexture.devices;
-        List<WebCamDevice> desiredCamera = FindCameraByName(devices, "USB2.0 PC CAMERA");
-
-        if (droidCam && FindCameraByName(devices, "DroidCam Source 3").Count > 0)
+        try
         {
-            desiredCamera.Add(FindCameraByName(devices, "DroidCam Source 3")[0]);
-        }
+            settings.circles = 0;
+            WebCamDevice[] devices = WebCamTexture.devices;
+            List<WebCamDevice> desiredCamera = FindCameraByName(devices, "USB2.0 PC CAMERA");
 
-        result = new ResultRace[desiredCamera.Count];
-        webCamTexture = new List<WebCamTexture>();
-        camObject = new GameObject[desiredCamera.Count];
-        cameraText = new TMP_Text[desiredCamera.Count];
-        markerDetected = new Dictionary<int, bool>();
-        mat = new Mat[desiredCamera.Count];
-        grayMat = new Mat[desiredCamera.Count];
-        if (desiredCamera.Count > 0)
-        {
-            for (int index = 0; index < desiredCamera.Count; index++)
+            if (droidCam && FindCameraByName(devices, "DroidCam Source 3").Count > 0)
             {
-                Dictionary<int, double> lastMarkerDetectionTime = new Dictionary<int, double>();
-                webCamTexture.Add(new WebCamTexture(desiredCamera[index].name));
-                webCamTexture[index].Play();
-                for (int i = 0; i < settings.marker; i++)
-                {
-                    markerDetected.Add(i, false);
-                    lastMarkerDetectionTime.Add(i, 0d);
-                }
-                lastMarkerDetectionTimes.Add(lastMarkerDetectionTime);
+                desiredCamera.Add(FindCameraByName(devices, "DroidCam Source 3")[0]);
             }
-            spawned = true;
-            markerDetectedVisible = new bool[markerDetected.Keys.Count];
 
+            result = new ResultRace[desiredCamera.Count];
+            webCamTexture = new List<WebCamTexture>();
+            camObject = new GameObject[desiredCamera.Count];
+            cameraText = new TMP_Text[desiredCamera.Count];
+            markerDetected = new Dictionary<int, bool>();
+            mat = new Mat[desiredCamera.Count];
+            grayMat = new Mat[desiredCamera.Count];
+            if (desiredCamera.Count > 0)
+            {
+                for (int index = 0; index < desiredCamera.Count; index++)
+                {
+                    Dictionary<int, double> lastMarkerDetectionTime = new Dictionary<int, double>();
+                    webCamTexture.Add(new WebCamTexture(desiredCamera[index].name));
+                    webCamTexture[index].Play();
+                    for (int i = 0; i < settings.marker; i++)
+                    {
+                        markerDetected.Add(i, false);
+                        lastMarkerDetectionTime.Add(i, 0d);
+                    }
+                    lastMarkerDetectionTimes.Add(lastMarkerDetectionTime);
+                }
+                spawned = true;
+                markerDetectedVisible = new bool[markerDetected.Keys.Count];
+
+            }
         }
-
+        catch (Exception e)
+        {
+            errorText.text = e.Message;
+        }
     }
+
     IEnumerator StartCountdown()
     {
         var timerVar = settings.timerStart;
@@ -116,146 +124,160 @@ public class CameraController : MonoBehaviour
             yield return null;
         }
     }
-    
 
     void UpdateImage(int index)
     {
-        if (cameraText[index] != null)
+        try
         {
-            webCamTexture[index].deviceName = "Дрон " + (index + 1);
-            cameraText[index].text = webCamTexture[index].deviceName;
-            camObject[index].name = webCamTexture[index].deviceName;
+            if (cameraText[index] != null)
+            {
+                webCamTexture[index].deviceName = "Дрон " + (index + 1);
+                cameraText[index].text = webCamTexture[index].deviceName;
+                camObject[index].name = webCamTexture[index].deviceName;
+            }
+
+            cameraText[index] = camObject[index].GetComponentInChildren<TMP_Text>();
+            mat[index] = UnityCV.TextureToMat(webCamTexture[index]);
+            grayMat[index] = new Mat();
+            if (endStart) CheckMarkAsync(index);
+
+            camObject[index].GetComponent<RawImage>().texture = UnityCV.MatToTexture(mat[index]);
+            Resources.UnloadUnusedAssets();
         }
-
-        cameraText[index] = camObject[index].GetComponentInChildren<TMP_Text>();
-        mat[index] = UnityCV.TextureToMat(webCamTexture[index]);
-        grayMat[index] = new Mat();
-        if (endStart) CheckMarkAsync(index);
-
-        camObject[index].GetComponent<RawImage>().texture = UnityCV.MatToTexture(mat[index]);
-        Resources.UnloadUnusedAssets();
+        catch (Exception e)
+        {
+            errorText.text = e.Message;
+        }
     }
 
     void Update()
     {
-
-
+        try
+        {
             for (int i = 0; i < markerDetected.Count; i++)
             {
                 markerDetectedVisible[i] = markerDetected[i];
             }
             if (Input.GetKeyUp(KeyCode.Space))
             {
-                // Обработка нажатия пробела в зависимости от текущего этапа гонки
-            switch (raceStage)
-            {
-                case RaceStage.NotStarted:
-                    StartCoroutine(StartCountdown());
+                switch (raceStage)
+                {
+                    case RaceStage.NotStarted:
+                        StartCoroutine(StartCountdown());
+                        break;
+                    case RaceStage.Racing:
+                        ShowResults();
+                        break;
+                    case RaceStage.Finished:
+                        RestartRace();
+                        break;
+                }
+            }
 
-                    break;
-                case RaceStage.Racing:
-                    ShowResults();
-                    break;
-                case RaceStage.Finished:
-                    RestartRace();
-                    break;
+            void ShowResults()
+            {
+                if (!resultsShown)
+                {
+                    // ... (код для вывода результатов)
+                    resultsShown = true;
+                    raceStage = RaceStage.Finished;
+                }
+            }
+
+            void RestartRace()
+            {
+                endStart = false;
+                startTime = DateTime.MinValue;
+                elapsedTime = TimeSpan.Zero;
+                for (int i = 0; i < result.Length; i++)
+                {
+                    result[i].currentTime.Clear();
+                    result[i].allTime = 0;
+                }
+                for (int i = 0; i < webCamTexture.Count; i++)
+                {
+                    Destroy(camObject[i]);
+                    camObject[i] = null;
+                }
+                spawned = false;
+                isCoroutineRunning = false;
+                resultsShown = false;
+                raceStage = RaceStage.NotStarted;
+            }
+
+            for (int index = 0; index < webCamTexture.Count; index++)
+            {
+                if (camObject[index] == null)
+                {
+                    camObject[index] = Instantiate(prefabDrone);
+                    camObject[index].transform.SetParent(gridLayout);
+                    camObject[index].gameObject.transform.localScale = new Vector3(1, 1, 1);
+                    spawned = true;
+                }
+
+                if (camObject[index] != null)
+                {
+                    UpdateImage(index);
+                }
             }
         }
-        void ShowResults()
+        catch (Exception e)
         {
-            // Вывод результатов
-            if (!resultsShown)
-            {
-                // ... (ваш существующий код для вывода результатов)
-                resultsShown = true;
-
-                // Переключаем этап на завершенный
-                raceStage = RaceStage.Finished;
-            }
-        }
-        void RestartRace()
-        {
-            // Перезапуск гонки
-
-            // Сброс всех необходимых переменных и состояний
-            endStart = false;
-            startTime = DateTime.MinValue;
-            elapsedTime = TimeSpan.Zero;
-            // Очистка результатов гонки
-            for (int i = 0; i < result.Length; i++)
-            {
-                result[i].currentTime.Clear();
-                result[i].allTime = 0;
-            }
-
-
-            // Пересоздание необходимых объектов
-            for (int i = 0; i < webCamTexture.Count; i++)
-            {
-                Destroy(camObject[i]);
-                camObject[i] = null;
-            }
-
-            // Сброс флагов
-            spawned = false;
-            isCoroutineRunning = false;
-            resultsShown = false;
-
-            // Переключение этапа на не начатый
-            raceStage = RaceStage.NotStarted;
-        }
-
-        for (int index = 0; index < webCamTexture.Count; index++)
-        {
-            if (camObject[index] == null)
-            {
-                camObject[index] = Instantiate(prefabDrone);
-                camObject[index].transform.SetParent(gridLayout);
-                camObject[index].gameObject.transform.localScale = new Vector3(1, 1, 1);
-                spawned = true;
-            }
-
-            if (camObject[index] != null)
-            {
-                UpdateImage(index);
-            }
+            errorText.text = e.Message;
         }
     }
+
     void CheckMarkAsync(int index)
     {
-        Cv2.CvtColor(mat[index], grayMat[index], ColorConversionCodes.BGR2GRAY);
-        CvAruco.DetectMarkers(grayMat[index], dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
-        CvAruco.DrawDetectedMarkers(mat[index], corners, ids);
+        try
+        {
+            Cv2.CvtColor(mat[index], grayMat[index], ColorConversionCodes.BGR2GRAY);
+            CvAruco.DetectMarkers(grayMat[index], dictionary, out corners, out ids, detectorParameters, out rejectedImgPoints);
+            CvAruco.DrawDetectedMarkers(mat[index], corners, ids);
 
-        if (ids.Length > 0)
-        {
-            for (int i = 0; i < ids.Length; i++)
+            if (ids.Length > 0)
             {
-                int markerId = ids[i];
-                markerDetected[markerId] = true;
-                lastMarkerDetectionTimes[index][markerId] = elapsedTime.TotalSeconds;
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    int markerId = ids[i];
+                    markerDetected[markerId] = true;
+                    lastMarkerDetectionTimes[index][markerId] = elapsedTime.TotalSeconds;
+                }
+            }
+            for (int i = 0; i < markerDetected.Keys.Count; i++)
+            {
+                if (elapsedTime.TotalSeconds - lastMarkerDetectionTimes[index][i] >= markerClearTime)
+                {
+                    markerDetected[i] = false;
+                }
+            }
+            bool allValuesTrue = markerDetected.Values.All(x => x);
+            if (allValuesTrue)
+            {
+                StartCheckMarkStatusAfterDelay(index);
             }
         }
-        for (int i = 0; i < markerDetected.Keys.Count; i++)
+        catch (Exception e)
         {
-            if (elapsedTime.TotalSeconds - lastMarkerDetectionTimes[index][i] >= markerClearTime)
-            {
-                markerDetected[i] = false;
-            }
-        }
-        bool allValuesTrue = markerDetected.Values.All(x => x);
-        if (allValuesTrue)
-        {
-            StartCheckMarkStatusAfterDelay(index);
+            errorText.text = e.Message;
         }
     }
+
     void StartCheckMarkStatusAfterDelay(int index)
     {
-        if (!isCoroutineRunning)
+        try
         {
-            StartCoroutine(CheckMarkStatusAfterDelay(index));
+            if (!isCoroutineRunning)
+            {
+                StartCoroutine(CheckMarkStatusAfterDelay(index));
+            }
+        }
+        catch (Exception e)
+        {
+            errorText.text = e.Message;
         }
     }
+
     IEnumerator CheckMarkStatusAfterDelay(int index)
     {
         isCoroutineRunning = true;
@@ -268,9 +290,7 @@ public class CameraController : MonoBehaviour
         {
             allMarksStillDetected = allMarksStillDetected && markerDetected[i];
         }
-        
 
-        
         if (allMarksStillDetected)
         {
             yield return new WaitForSeconds(markerClearTime);
@@ -294,26 +314,31 @@ public class CameraController : MonoBehaviour
                     result[index].currentTime.Add(elapsedTime.TotalSeconds);
                     result[index].allTime = result[index].currentTime.Sum();
                 }
-                raceText.text = "Время кругов:\n " +result[index].GetTimeSummary();
+                raceText.text = ("Время кругов:\n " + result[index].GetTimeSummary());
             }
         }
-
         isCoroutineRunning = false;
-
     }
-
 
     private List<WebCamDevice> FindCameraByName(WebCamDevice[] devices, string cameraName)
     {
-        List<WebCamDevice> listCam = new List<WebCamDevice>();
-        foreach (var device in devices)
+        try
         {
-            if (device.name.Contains(cameraName))
+            List<WebCamDevice> listCam = new List<WebCamDevice>();
+            foreach (var device in devices)
             {
-                listCam.Add(device);
+                if (device.name.Contains(cameraName))
+                {
+                    listCam.Add(device);
+                }
             }
+            return listCam;
         }
-        return listCam;
+        catch (Exception e)
+        {
+            errorText.text = e.Message;
+            return new List<WebCamDevice>();
+        }
     }
 }
 
@@ -333,6 +358,7 @@ public enum RaceStage
     Racing,
     Finished
 }
+
 [Serializable]
 public class SettingsRace
 {
@@ -349,11 +375,20 @@ public class ResultRace
     public double allTime;
     public string GetTimeSummary()
     {
-        string timeSummary = "";
-        for (int i = 0; i < currentTime.Count; i++)
+        try
         {
-            timeSummary += $"Круг {(i+1)}: {currentTime[i]} \n";
+            string timeSummary = "";
+            for (int i = 0; i < currentTime.Count; i++)
+            {
+                TimeSpan timeSpan = TimeSpan.FromSeconds(currentTime[i]);
+                string formattedTime = timeSpan.ToString(@"mm\:ss\.fff");
+                timeSummary += $"Круг {(i + 1)}: {formattedTime}\n";
+            }
+            return timeSummary;
         }
-        return timeSummary;
+        catch (Exception e)
+        {
+            return "";
+        }
     }
 }
