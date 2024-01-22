@@ -46,6 +46,7 @@ public class RaceManager : MonoBehaviour
             results[cameraIndex] = new Result
             {
                 camObject = newImageObject,
+                camName = newImageObject.transform.GetChild(0).GetComponent<TMP_Text>(),
                 camTime = newImageObject.transform.GetChild(1).GetComponent<TMP_Text>()
             };
         }
@@ -87,11 +88,12 @@ public class RaceManager : MonoBehaviour
     }
     private IEnumerator StartRaceCountdown()
     {
-        while (countdownTime > 0)
+        int _countdownTime = countdownTime;
+        while (_countdownTime > 0)
         {
-            resultsText.text = "Старт через: " + countdownTime;
+            resultsText.text = "Старт через: " + _countdownTime;
             yield return new WaitForSeconds(1);
-            countdownTime--;
+            _countdownTime--;
         }
 
         BeginRace();
@@ -155,6 +157,7 @@ public class RaceManager : MonoBehaviour
         public List<double> resultTime = new List<double>();
         public double allTime = 0;
         public GameObject camObject;
+        public TMP_Text camName;
         public TMP_Text camTime;
 
 
