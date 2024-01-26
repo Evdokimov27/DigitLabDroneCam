@@ -7,6 +7,7 @@ using OpenCvSharp.Flann;
 using System.Linq;
 using UnityEngine.XR.ARFoundation;
 using System.Collections;
+using UnityEngine.Networking;
 
 public enum RaceStage
 {
@@ -30,7 +31,7 @@ public class RaceManager : MonoBehaviour
     private TimeSpan elapsedTime;
     private bool raceInProgress = false;
     private RaceStage currentStage = RaceStage.NotStarted;
-
+    [SerializeField]
     private void Start()
     {
         if (webcamManager == null || prefab == null)
@@ -98,7 +99,7 @@ public class RaceManager : MonoBehaviour
 
         BeginRace();
     }
-
+   
     private void BeginRace()
     {
         currentStage = RaceStage.Racing;

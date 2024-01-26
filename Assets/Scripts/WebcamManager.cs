@@ -15,7 +15,7 @@ public class WebcamManager : MonoBehaviour
         WebCamDevice[] devices = WebCamTexture.devices;
 
         List<WebCamDevice> desiredCameras = FindCameraByName(devices, "USB2.0 PC CAMERA");
-        desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 3"));
+        //desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 3"));
         NumberOfCameras = desiredCameras.Count;
         InitializeCameras(desiredCameras);
     }
