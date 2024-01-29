@@ -8,6 +8,7 @@ using System.Linq;
 using UnityEngine.XR.ARFoundation;
 using System.Collections;
 using UnityEngine.Networking;
+using UnityEngine.Timeline;
 
 public enum RaceStage
 {
@@ -19,7 +20,13 @@ public enum RaceStage
 [Serializable]
 public class RaceManager : MonoBehaviour
 {
-    int countdownTime = 3;
+    public TypeRace raceType;
+    public TMP_Dropdown sprintOrCircules;
+    public TMP_InputField markerCount;
+    public TMP_InputField markerOnCircul;
+
+    public int countdownTime = 3;
+    public int maxWinner = 3;
     public TMP_Text timerText;
     public TMP_Text resultsText;
     public Result[] results;
@@ -31,6 +38,9 @@ public class RaceManager : MonoBehaviour
     private TimeSpan elapsedTime;
     private bool raceInProgress = false;
     private RaceStage currentStage = RaceStage.NotStarted;
+    private Color gold = new Color(1, 0.843f, 0);
+    private Color silver = new Color(0.753f, 0.753f, 0.753f, 1f);
+    private Color bronze = new Color(0.804f, 0.498f, 0.196f, 1f);
     [SerializeField]
     private void Start()
     {
@@ -47,17 +57,45 @@ public class RaceManager : MonoBehaviour
             results[cameraIndex] = new Result
             {
                 camObject = newImageObject,
-                camName = newImageObject.transform.GetChild(0).GetComponent<TMP_Text>(),
-                camTime = newImageObject.transform.GetChild(1).GetComponent<TMP_Text>()
+                camName = newImageObject.transform.GetChild(0).GetComponent<TMP_InputField>(),
+                camTime = newImageObject.transform.GetChild(1).GetComponent<TMP_Text>(),
+                winNomber = newImageObject.transform.GetChild(2).GetChild(0).GetComponent<TMP_Text>()
             };
         }
     }
+    public void ChangeDropdown()
+    {
+        if (sprintOrCircules.value == 0)
+        {
+            raceType = TypeRace.Circuit;
+            markerOnCircul.gameObject.SetActive(true);
+        }
+        if (sprintOrCircules.value == 1)
+        {
+            raceType = TypeRace.Sprint;
+            markerOnCircul.gameObject.SetActive(false);
+        }
+    }
+
     IEnumerator WaitForInitialization(int cameraIndex, GameObject newImageObject)
     {
         yield return new WaitUntil(() => results[cameraIndex] != null);
     }
     void Update()
     {
+        if (currentStage == RaceStage.Racing)
+        {
+            foreach (Result result in results)
+            {
+                if (int.TryParse(markerCount.text, out int number))
+                    if (result.marker == number)
+                    {
+                        FinishRace();
+                    }
+            }
+        }
+        var dropdownlist = GameObject.Find("Dropdown List");
+        if (dropdownlist != null) dropdownlist.transform.localScale = new Vector3(2, 2, 1);
         if (currentStage == RaceStage.Racing)
         {
             UpdateRaceTimer();
@@ -70,7 +108,7 @@ public class RaceManager : MonoBehaviour
                     StartCoroutine(StartRaceCountdown());
                     break;
                 case RaceStage.Racing:
-                    ShowResults();
+                    FinishRace();
                     break;
                 case RaceStage.Finished:
                     RestartRace();
@@ -80,6 +118,7 @@ public class RaceManager : MonoBehaviour
     }
     public void Check(int cameraIndex)
     {
+
         if (elapsedTime.TotalSeconds > 0)
         {
             double currentTimeForCurrentLap = elapsedTime.TotalSeconds - results[cameraIndex].allTime;
@@ -89,6 +128,7 @@ public class RaceManager : MonoBehaviour
     }
     private IEnumerator StartRaceCountdown()
     {
+        RestartRace();
         int _countdownTime = countdownTime;
         while (_countdownTime > 0)
         {
@@ -96,17 +136,24 @@ public class RaceManager : MonoBehaviour
             yield return new WaitForSeconds(1);
             _countdownTime--;
         }
-
         BeginRace();
     }
    
     private void BeginRace()
     {
+        sprintOrCircules.interactable = false;
+        markerCount.interactable = false;
+        markerOnCircul.interactable = false;
         currentStage = RaceStage.Racing;
         startTime = DateTime.Now;
         raceInProgress = true;
+        foreach(var result in results)
+        {
+            result.marker = 0;
+        }
         timerText.text = "00:00:00";
-        resultsText.text = "";
+        resultsText.text = $"Гонка идет!\nSpace для преждевременного окончания";
+
     }
 
     private void UpdateRaceTimer()
@@ -120,6 +167,9 @@ public class RaceManager : MonoBehaviour
     
     private void FinishRace()
     {
+        sprintOrCircules.interactable = true;
+        markerCount.interactable = true;
+        markerOnCircul.interactable = true;
         raceInProgress = false;
         currentStage = RaceStage.Finished;
         ShowResults();
@@ -127,48 +177,100 @@ public class RaceManager : MonoBehaviour
 
     private void ShowResults()
     {
-        currentStage = RaceStage.Finished;
         resultsText.text = "Гонка завершена! Время: " + elapsedTime.ToString(@"hh\:mm\:ss\.fff");
+        DisplayTopRaceResults(maxWinner);
     }
     void RestartRace()
     {
         foreach (var result in results)
         {
             result.resultTime.Clear();
+            result.circleTime.Clear();
             result.allTime = 0;
-            result.camTime.text = "Время кругов:";
+            result.marker = 0;
+            if(raceType == TypeRace.Circuit)result.camTime.text = $"Пройдено кругов: {result.marker}/{markerCount.text}\nВремя кругов:";
+            if(raceType == TypeRace.Sprint)result.camTime.text = $"Пройдено меток: {result.marker}/{markerCount.text}";
+            result.camObject.SetActive(true);
+            result.camObject.transform.GetChild(2).gameObject.SetActive(false);
         }
         currentStage = RaceStage.NotStarted;
         raceInProgress = false;
         timerText.text = "00:00:00";
-        resultsText.text = "Готовы к новому старту!";
+        resultsText.text = $"Готовы к новому старту!\nSpace для начала";
         startTime = DateTime.MinValue;
         elapsedTime = TimeSpan.Zero;
         for (int i = 0; i < results.Length; i++)
         {
             results[i].resultTime.Clear();
+            results[i].circleTime.Clear();
             results[i].allTime = 0;
         }
     }
+
+
+    private void DisplayTopRaceResults(int topPlaces)
+    {
+        if (results.Length == 0)
+        {
+            Debug.LogError("Нет результатов для отображения.");
+            return;
+        }
+
+        // Создаем новый отсортированный список
+        var sortedResults = results
+            .OrderByDescending(r => r.marker) // Сначала сортируем по количеству меток
+            .ThenBy(r => r.allTime)           // Затем сортируем по времени
+            .ToArray();
+
+        // Обрабатываем отсортированные результаты
+        for (int i = 0; i < sortedResults.Length; i++)
+        {
+            if (i < topPlaces)
+            {
+                sortedResults[i].camObject.transform.GetChild(2).gameObject.SetActive(true);
+                sortedResults[i].winNomber.text = $"Место {i + 1}\nОбщее время:\n{sortedResults[i].allTime:F2} сек";
+                switch (i + 1)
+                {
+                    case 1:
+                        sortedResults[i].winNomber.color = gold;
+                        break;
+                    case 2:
+                        sortedResults[i].winNomber.color = silver;
+                        break;
+                    case 3:
+                        sortedResults[i].winNomber.color = bronze;
+                        break;
+                }
+            }
+            else
+            {
+                sortedResults[i].camObject.SetActive(false);
+            }
+        }
+    }
+
 
 
     [Serializable]
     public class Result
     {
         public List<double> resultTime = new List<double>();
+        public List<double> circleTime = new List<double>();
         public double allTime = 0;
+        public int marker;
         public GameObject camObject;
-        public TMP_Text camName;
+        public TMP_InputField camName;
         public TMP_Text camTime;
+        public TMP_Text winNomber;
 
 
         public string GetTimeSummary()
         {
 
             string timeSummary = "";
-            for (int i = 0; i < resultTime.Count; i++)
+            for (int i = 0; i < circleTime.Count; i++)
             {
-                TimeSpan timeSpan = TimeSpan.FromSeconds(resultTime[i]);
+                TimeSpan timeSpan = TimeSpan.FromSeconds(circleTime[i]);
                 string formattedTime = timeSpan.ToString(@"mm\:ss\.fff");
                 timeSummary += $"Круг {(i + 1)}: {formattedTime}\n";
             }
@@ -176,3 +278,8 @@ public class RaceManager : MonoBehaviour
         }
     }
 }
+public enum TypeRace
+{
+    Sprint,
+    Circuit
+};

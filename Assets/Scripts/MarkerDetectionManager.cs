@@ -16,6 +16,7 @@ public class MarkerDetectionManager : MonoBehaviour
     private bool isCoroutineRunning = false;
     private Dictionary<int, Dictionary<int, double>> lastMarkerDetectionTimes = new Dictionary<int, Dictionary<int, double>>();
     public float markerClearTime;
+    public Image[] correctImg;
     int result = 0;
     public UIManager uiManager;
     public WebcamManager webcamManager;
@@ -27,10 +28,12 @@ public class MarkerDetectionManager : MonoBehaviour
     public TMP_InputField textSpeed;
     void Start()
     {
+        correctImg = new Image[webcamManager.NumberOfCameras];
         markerDetected = new SerializableDictionary[webcamManager.NumberOfCameras];
         for (int i = 0; i < webcamManager.NumberOfCameras; i++)
         {
             markerDetected[i] = new SerializableDictionary();
+            correctImg[i] = raceManager.results[i].camObject.transform.GetChild(4).GetComponent<Image>();
         }
         detectorParameters = DetectorParameters.Create();
         dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
@@ -111,7 +114,7 @@ public class MarkerDetectionManager : MonoBehaviour
 
             for (int markerIndex = 0; markerIndex < markerCount; markerIndex++)
             {
-                dronesImages[droneIndex].markerImages[markerIndex] = raceManager.results[droneIndex].camObject.transform.GetChild(2).GetChild(markerIndex).GetComponent<Image>();
+                dronesImages[droneIndex].markerImages[markerIndex] = raceManager.results[droneIndex].camObject.transform.GetChild(3).GetChild(markerIndex).GetComponent<Image>();
             }
         }
     }
@@ -133,13 +136,38 @@ public class MarkerDetectionManager : MonoBehaviour
             bool allMarksStillDetected = markerDetected.Values.All(x => x);
             if (allMarksStillDetected)
             {
+                correctImg[cameraIndex].enabled = true;
+                correctImg[cameraIndex].color = Color.yellow;
                 yield return new WaitForSeconds(markerClearTime);
                 allMarksStillDetected = markerDetected.Values.All(x => !x);
                 if (allMarksStillDetected)
                 {
+                    correctImg[cameraIndex].color = Color.green;
                     Debug.Log(cameraIndex + " Все маркеры обнаружены и очищены");
                     raceManager.Check(cameraIndex);
+                    if (raceManager.raceType == TypeRace.Circuit)
+                    {
+                        if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                        {
+                            if (raceManager.results[cameraIndex].resultTime.Count % markerOnCircul == 0)
+                            {
+                                raceManager.results[cameraIndex].marker++;
+                                raceManager.results[cameraIndex].circleTime.Add(raceManager.results[cameraIndex].allTime);
+                                raceManager.results[cameraIndex].camTime.text = $"Пройдено кругов: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}\nВремя кругов:\n";
+                                raceManager.results[cameraIndex].camTime.text += raceManager.results[cameraIndex].GetTimeSummary();
+                            }
+                        }
+                    }
+                    if (raceManager.raceType == TypeRace.Sprint)
+                    {
+                        raceManager.results[cameraIndex].marker++;
+                        raceManager.results[cameraIndex].camTime.text = $"Пройдено меток: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}";
+                    }
+                    yield return new WaitForSeconds(markerClearTime);
+                    correctImg[cameraIndex].enabled = false;
                 }
+                else correctImg[cameraIndex].enabled = false;
+
             }
         }
         isCoroutineRunning = false;

@@ -19,12 +19,12 @@ public class UIManager : MonoBehaviour
         {
             case 1:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(700, 700);
+                    gridLayoutGroup.cellSize = new Vector2(800, 800);
                     break;
                 }
             case 2:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(700, 700);
+                    gridLayoutGroup.cellSize = new Vector2(800, 800);
                     break;
 
                 }

@@ -7,7 +7,7 @@ public class WebcamManager : MonoBehaviour
 {
     private List<WebCamTexture> webCamTextures = new List<WebCamTexture>();
     private List<Mat> webCamMats = new List<Mat>();
-
+    public bool droidCam;
     public int NumberOfCameras;
 
     void Awake()
@@ -15,7 +15,7 @@ public class WebcamManager : MonoBehaviour
         WebCamDevice[] devices = WebCamTexture.devices;
 
         List<WebCamDevice> desiredCameras = FindCameraByName(devices, "USB2.0 PC CAMERA");
-        //desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 3"));
+        if(droidCam)desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 3"));
         NumberOfCameras = desiredCameras.Count;
         InitializeCameras(desiredCameras);
     }

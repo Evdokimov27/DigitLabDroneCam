@@ -29,11 +29,6 @@ public class MainController : MonoBehaviour
                 Texture cameraFrame = UnityCV.MatToTexture(frame);
                 uiManager.UpdateCameraImage(i, cameraFrame);
                 markerDetectionManager.ProcessFrame(i, frame, markerDetectionManager.markerDetected[i].dictionary);
-
-                if (raceManager.results[i].resultTime.Count > 0)
-                {
-                    raceManager.results[i].camTime.text = raceManager.results[i].GetTimeSummary();
-                }
                 Resources.UnloadUnusedAssets();
             }
         }
