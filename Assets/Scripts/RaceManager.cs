@@ -9,6 +9,8 @@ using UnityEngine.XR.ARFoundation;
 using System.Collections;
 using UnityEngine.Networking;
 using UnityEngine.Timeline;
+using System.IO;
+using System.Text;
 
 public enum RaceStage
 {
@@ -77,10 +79,6 @@ public class RaceManager : MonoBehaviour
         }
     }
 
-    IEnumerator WaitForInitialization(int cameraIndex, GameObject newImageObject)
-    {
-        yield return new WaitUntil(() => results[cameraIndex] != null);
-    }
     void Update()
     {
         if (currentStage == RaceStage.Racing)
@@ -179,6 +177,7 @@ public class RaceManager : MonoBehaviour
     {
         resultsText.text = "Гонка завершена! Время: " + elapsedTime.ToString(@"hh\:mm\:ss\.fff");
         DisplayTopRaceResults(maxWinner);
+        SaveRaceResultsToGoogleSheets();
     }
     void RestartRace()
     {
@@ -206,6 +205,76 @@ public class RaceManager : MonoBehaviour
             results[i].allTime = 0;
         }
     }
+    public void SaveRaceResultsToGoogleSheets()
+    {
+        StartCoroutine(SendRaceResults());
+    }
+
+    IEnumerator SendRaceResults()
+    {
+        RaceResultData raceData = new RaceResultData
+        {
+            participantResults = new List<ParticipantResult>()
+        };
+
+        var sortedResults = results.OrderBy(r => r.marker).ThenBy(r => r.allTime).ToArray();
+        int.TryParse(markerCount.text, out int number);
+        for (int i = 0; i < sortedResults.Length; i++)
+        {
+            ParticipantResult participantResult = null;
+            if (raceType == TypeRace.Circuit)
+            {
+                participantResult = new ParticipantResult
+                {
+                    place = i + 1,
+                    typeRace = "Круговая",
+                    participantName = sortedResults[i].camName.text,
+                    totalTime = sortedResults[i].allTime,
+                    lapTimes = sortedResults[i].circleTime,
+                    marker = sortedResults[i].marker,
+                    maxMarker = number,
+                };
+            }
+            if (raceType == TypeRace.Sprint)
+            {
+                participantResult = new ParticipantResult
+                {
+                    place = i + 1,
+                    typeRace = "Спринт",
+                    participantName = sortedResults[i].camName.text,
+                    totalTime = sortedResults[i].allTime,
+                    lapTimes = sortedResults[i].resultTime,
+                    marker = sortedResults[i].marker,
+                    maxMarker = number,
+                };
+            }
+            raceData.participantResults.Add(participantResult);
+        }
+
+
+        
+
+        string jsonData = JsonUtility.ToJson(raceData);
+        Debug.Log(jsonData);
+        UnityWebRequest www = UnityWebRequest.Post("https://script.google.com/macros/s/AKfycbwlTnbYKYG18bMYZHoGsirGdj9G5sqiZwBNHWNamR-InmkHMdkXC1ECYMMqkBdPjqE0vg/exec", "");
+        www.uploadHandler = (UploadHandler)new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(jsonData));
+        www.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        www.SetRequestHeader("Content-Type", "application/json");
+        yield return www.SendWebRequest();
+        if (www.isHttpError)
+        {
+            Debug.LogError(www.error);
+        }
+        else
+        {
+            Debug.Log("Race results sent successfully " + www.result);
+        }
+    }
+
+
+
+
+
 
 
     private void DisplayTopRaceResults(int topPlaces)
@@ -277,7 +346,26 @@ public class RaceManager : MonoBehaviour
             return timeSummary;
         }
     }
+    [System.Serializable]
+    public class RaceResultData
+    {
+        public List<ParticipantResult> participantResults;
+    }
+
+    [Serializable]
+    public class ParticipantResult
+    {
+        public int place;
+        public string typeRace;
+        public string participantName;
+        public double totalTime;
+        public List<double> lapTimes;
+        public int marker;
+        public int maxMarker;
+    }
+
 }
+
 public enum TypeRace
 {
     Sprint,

@@ -172,9 +172,10 @@ public class MarkerDetectionManager : MonoBehaviour
         }
         isCoroutineRunning = false;
     }
+    [Serializable]
+    public class DroneImages
+    {
+        public Image[] markerImages;
+    }
 }
-[Serializable]
-public class DroneImages
-{
-    public Image[] markerImages;
-}
+

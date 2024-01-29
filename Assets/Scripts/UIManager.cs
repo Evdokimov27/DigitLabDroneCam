@@ -35,7 +35,7 @@ public class UIManager : MonoBehaviour
                 }
             case 4:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(475, 475);
+                    gridLayoutGroup.cellSize = new Vector2(425, 425);
                     break;
                 }
             case 5:
