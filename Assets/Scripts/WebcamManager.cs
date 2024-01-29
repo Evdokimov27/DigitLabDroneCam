@@ -16,7 +16,6 @@ public class WebcamManager : MonoBehaviour
 
         List<WebCamDevice> desiredCameras = FindCameraByName(devices, "USB2.0 PC CAMERA");
         if(droidCam)desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 3"));
-        if(droidCam)desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 2"));
         NumberOfCameras = desiredCameras.Count;
         InitializeCameras(desiredCameras);
     }
