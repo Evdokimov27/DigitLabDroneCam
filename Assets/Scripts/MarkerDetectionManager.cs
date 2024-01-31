@@ -93,7 +93,7 @@ public class MarkerDetectionManager : MonoBehaviour
                 markerDetectedDict[key] = false;
             }
         }
-        if (!isCoroutineRunning && markerDetectedDict.Values.All(x => x) && markerDetected[cameraIndex].dictionary.Keys.Count > markerCount-1)
+        if (!isCoroutineRunning && markerDetectedDict.Count > 3 && markerDetected[cameraIndex].dictionary.Keys.Count > markerCount-1)
         {
             StartCoroutine(CheckMarkStatusAfterDelay(cameraIndex, markerDetectedDict));
         }

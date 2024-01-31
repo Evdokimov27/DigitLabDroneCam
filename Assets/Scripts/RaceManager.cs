@@ -24,6 +24,7 @@ public class RaceManager : MonoBehaviour
     public TMP_Dropdown sprintOrCircules;
     public TMP_InputField markerCount;
     public TMP_InputField markerOnCircul;
+    public TMP_InputField detetMarkerClear;
 
     public int countdownTime = 3;
     public int maxWinner = 3;
@@ -121,9 +122,12 @@ public class RaceManager : MonoBehaviour
 
         if (elapsedTime.TotalSeconds > 0)
         {
-            double currentTimeForCurrentLap = elapsedTime.TotalSeconds - results[cameraIndex].allTime;
-            results[cameraIndex].resultTime.Add(currentTimeForCurrentLap);
-            results[cameraIndex].allTime = results[cameraIndex].resultTime.Sum();
+            if (double.TryParse(detetMarkerClear.text, out double number))
+            {
+                double currentTimeForCurrentLap = (elapsedTime.TotalSeconds - results[cameraIndex].allTime) - (number/1000);
+                results[cameraIndex].resultTime.Add(currentTimeForCurrentLap);
+                results[cameraIndex].allTime = results[cameraIndex].resultTime.Sum();
+            }
         }
     }
     private IEnumerator StartRaceCountdown()
