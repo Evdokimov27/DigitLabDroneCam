@@ -8,51 +8,70 @@ using UnityEngine.XR.ARFoundation;
 using TMPro;
 using System;
 using UnityEngine.UI;
+using Unity.Mathematics;
 
 public class MarkerDetectionManager : MonoBehaviour
 {
     private DetectorParameters detectorParameters;
     private Dictionary dictionary;
+    public int[] idsCurrent;
     private bool isCoroutineRunning = false;
     private Dictionary<int, Dictionary<int, double>> lastMarkerDetectionTimes = new Dictionary<int, Dictionary<int, double>>();
-    public float markerClearTime;
+    public float markerClearTime = 0;
+    public float delay = 0;
     public Image[] correctImg;
     int result = 0;
     public UIManager uiManager;
     public WebcamManager webcamManager;
     public SerializableDictionary[] markerDetected;
     public int markerCount;
-    public RaceManager raceManager = new RaceManager();
-    public TMP_InputField textClear;
+    public RaceManager raceManager;
+    public TMP_InputField markerCleadDelay;
     public DroneImages[] dronesImages;
-    public TMP_InputField textSpeed;
+    public TMP_InputField checkDelay;
+    private int[][] requiredMarkerSets = new int[][]
+    {
+    new int[] {0, 3, 5},
+    new int[] {1, 4, 6},
+    new int[] {2, 5, 7},
+    new int[] {3, 0, 6},
+    new int[] {4, 1, 7},
+    new int[] {5, 2, 0},
+    new int[] {6, 3, 1},
+    new int[] {7, 4, 2},
+    };
     void Start()
     {
         correctImg = new Image[webcamManager.NumberOfCameras];
         markerDetected = new SerializableDictionary[webcamManager.NumberOfCameras];
+        idsCurrent = new int[markerCount];
+
         for (int i = 0; i < webcamManager.NumberOfCameras; i++)
         {
             markerDetected[i] = new SerializableDictionary();
             correctImg[i] = raceManager.results[i].camObject.transform.GetChild(4).GetComponent<Image>();
+
         }
         detectorParameters = DetectorParameters.Create();
         dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
         InitializeDronesImages();
     }
 
-    public void ProcessFrame(int cameraIndex, Mat frame, Dictionary<int, bool> markerDetected)
+    public void ProcessFrame(int cameraIndex, Mat frame)
     {
         if (frame.Channels() == 3 || frame.Channels() == 4)
         {
             Cv2.CvtColor(frame, frame, ColorConversionCodes.BGR2GRAY);
             CvAruco.DetectMarkers(frame, dictionary, out Point2f[][] corners, out int[] ids, detectorParameters, out _);
             CvAruco.DrawDetectedMarkers(frame, corners, ids);
+
+            // Устанавливаем текстуру, чтобы увидеть результат
             UpdateMarkerStatus(cameraIndex, ids);
         }
     }
     private void Update()
     {
-        if (float.TryParse(textClear.text, out float number))
+        if (float.TryParse(markerCleadDelay.text, out float number))
         {
             markerClearTime = number / 1000;
         }
@@ -76,7 +95,6 @@ public class MarkerDetectionManager : MonoBehaviour
             {
                 lastMarkerDetectionTimes[cameraIndex][id] = 0;
             }
-
             markerDetectedDict[id] = true;
             lastMarkerDetectionTimes[cameraIndex][id] = Time.time;
         }
@@ -93,10 +111,11 @@ public class MarkerDetectionManager : MonoBehaviour
                 markerDetectedDict[key] = false;
             }
         }
-        if (!isCoroutineRunning && markerDetectedDict.Count > 3 && markerDetected[cameraIndex].dictionary.Keys.Count > markerCount-1)
+        if (!isCoroutineRunning && ids.Length > 0)
         {
             StartCoroutine(CheckMarkStatusAfterDelay(cameraIndex, markerDetectedDict));
         }
+        else if (!isCoroutineRunning) correctImg[cameraIndex].enabled = false;
         UpdateDroneImages(cameraIndex, markerDetected[cameraIndex].dictionary);
 
     }
@@ -129,21 +148,35 @@ public class MarkerDetectionManager : MonoBehaviour
 
     IEnumerator CheckMarkStatusAfterDelay(int cameraIndex, Dictionary<int, bool> markerDetected)
     {
-        if (float.TryParse(textSpeed.text, out float number))
+        if (float.TryParse(checkDelay.text, out float number))
         {
+            delay = number / 1000;
             isCoroutineRunning = true;
-            yield return new WaitForSeconds(number / 1000);
-            bool allMarksStillDetected = markerDetected.Values.All(x => x);
-            if (allMarksStillDetected)
+            bool allRequiredMarkersDetected = false;
+
+            foreach (var markerSet in requiredMarkerSets)
+            {
+                allRequiredMarkersDetected = markerSet.All(markerId => markerDetected.ContainsKey(markerId) && markerDetected[markerId]);
+                if (allRequiredMarkersDetected)
+                {
+                    break;
+                }
+            }
+
+            if (allRequiredMarkersDetected)
             {
                 correctImg[cameraIndex].enabled = true;
                 correctImg[cameraIndex].color = Color.yellow;
-                yield return new WaitForSeconds(markerClearTime);
-                allMarksStillDetected = markerDetected.Values.All(x => !x);
-                if (allMarksStillDetected)
+                yield return new WaitForSeconds(delay);
+
+
+                bool zeroMarkersVisible = markerDetected.Values.All(x => !x);
+
+                if (zeroMarkersVisible)
                 {
                     correctImg[cameraIndex].color = Color.green;
                     Debug.Log(cameraIndex + " Все маркеры обнаружены и очищены");
+
                     raceManager.Check(cameraIndex);
                     if (raceManager.raceType == TypeRace.Circuit)
                     {
@@ -163,7 +196,7 @@ public class MarkerDetectionManager : MonoBehaviour
                         raceManager.results[cameraIndex].marker++;
                         raceManager.results[cameraIndex].camTime.text = $"Пройдено меток: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}";
                     }
-                    yield return new WaitForSeconds(markerClearTime);
+                    yield return new WaitForSeconds(delay / 2);
                     correctImg[cameraIndex].enabled = false;
                 }
                 else correctImg[cameraIndex].enabled = false;

@@ -9,12 +9,7 @@ public class MainController : MonoBehaviour
     public RaceManager raceManager;
     public UIManager uiManager;
     public MarkerDetectionManager markerDetectionManager;
-    private Dictionary<int, bool>[] markerDetected;
 
-    void Start()
-    {
-        markerDetected = new Dictionary<int, bool>[webcamManager.NumberOfCameras];
-    }
 
 
     void Update()
@@ -28,7 +23,7 @@ public class MainController : MonoBehaviour
             {
                 Texture cameraFrame = UnityCV.MatToTexture(frame);
                 uiManager.UpdateCameraImage(i, cameraFrame);
-                markerDetectionManager.ProcessFrame(i, frame, markerDetectionManager.markerDetected[i].dictionary);
+                markerDetectionManager.ProcessFrame(i, frame);
                 Resources.UnloadUnusedAssets();
             }
         }
