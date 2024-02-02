@@ -53,7 +53,7 @@ public class MarkerDetectionManager : MonoBehaviour
 
         }
         detectorParameters = DetectorParameters.Create();
-        dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict6X6_250);
+        dictionary = CvAruco.GetPredefinedDictionary(PredefinedDictionaryName.Dict4X4_100);
         InitializeDronesImages();
     }
 
