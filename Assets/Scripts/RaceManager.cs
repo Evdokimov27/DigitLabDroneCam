@@ -232,7 +232,7 @@ public class RaceManager : MonoBehaviour
             if (i < topPlaces)
             {
                 sortedResults[i].camObject.transform.GetChild(2).gameObject.SetActive(true);
-                sortedResults[i].winNomber.text = $"Место {i + 1}\nОбщее время:\n{sortedResults[i].allTime:F2} сек";
+                sortedResults[i].winNomber.text = $"Место {i + 1}\nОбщее время по результатам {sortedResults[i].circleTime.Count} кругов:\n{sortedResults[i].allTime:F2} сек";
                 switch (i + 1)
                 {
                     case 1:
@@ -266,6 +266,8 @@ public class RaceManager : MonoBehaviour
         public TMP_InputField camName;
         public TMP_Text camTime;
         public TMP_Text winNomber;
+        public Image imgResult;
+        public RectTransform panelImg;
 
 
         public string GetTimeSummary()
