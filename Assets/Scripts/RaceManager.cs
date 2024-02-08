@@ -25,6 +25,7 @@ public class RaceManager : MonoBehaviour
     public TMP_InputField markerCount;
     public TMP_InputField markerOnCircul;
     public TMP_InputField detetMarkerClear;
+    public AudioSource soundStart;
 
     public int countdownTime = 3;
     public int maxWinner = 3;
@@ -134,6 +135,7 @@ public class RaceManager : MonoBehaviour
     {
         RestartRace();
         int _countdownTime = countdownTime;
+        soundStart.Play();
         while (_countdownTime > 0)
         {
             resultsText.text = "Старт через: " + _countdownTime;

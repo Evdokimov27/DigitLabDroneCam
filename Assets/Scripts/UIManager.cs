@@ -21,6 +21,7 @@ public class UIManager : MonoBehaviour
             r.imgResult = r.camObject.transform.GetChild(4).GetComponent<Image>();
         }
     }
+   
     private void AdjustGridLayout(int numberOfCameras)
     {
         
