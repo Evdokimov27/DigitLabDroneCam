@@ -26,7 +26,6 @@ public class RaceManager : MonoBehaviour
     public TMP_InputField markerOnCircul;
     public TMP_InputField detetMarkerClear;
     public AudioSource soundStart;
-
     public int countdownTime = 3;
     public int maxWinner = 3;
     public TMP_Text timerText;
@@ -35,15 +34,16 @@ public class RaceManager : MonoBehaviour
     public WebcamManager webcamManager;
     public GameObject prefab;
     public Transform imagesParent;
+    public RaceResultsManager raceResultsManager;
+    public bool raceInProgress = false;
+    public RaceStage currentStage = RaceStage.NotStarted;
 
     private DateTime startTime;
     private TimeSpan elapsedTime;
-    private bool raceInProgress = false;
-    private RaceStage currentStage = RaceStage.NotStarted;
     private Color gold = new Color(1, 0.843f, 0);
     private Color silver = new Color(0.753f, 0.753f, 0.753f, 1f);
     private Color bronze = new Color(0.804f, 0.498f, 0.196f, 1f);
-    [SerializeField]
+
     private void Start()
     {
         if (webcamManager == null || prefab == null)
@@ -59,9 +59,10 @@ public class RaceManager : MonoBehaviour
             results[cameraIndex] = new Result
             {
                 camObject = newImageObject,
-                camName = newImageObject.transform.GetChild(0).GetComponent<TMP_InputField>(),
-                camTime = newImageObject.transform.GetChild(1).GetComponent<TMP_Text>(),
-                winNomber = newImageObject.transform.GetChild(2).GetChild(0).GetComponent<TMP_Text>()
+                camName = newImageObject.transform.GetChild(2).GetComponent<TMP_InputField>(),
+                camTime = newImageObject.transform.GetChild(3).GetComponent<TMP_Text>(),
+                raceText = newImageObject.transform.GetChild(3).GetChild(1).GetChild(0).GetChild(1).GetComponent<TMP_Text>(),
+                winNomber = newImageObject.transform.GetChild(4).GetChild(0).GetComponent<TMP_Text>()
             };
         }
     }
@@ -85,22 +86,27 @@ public class RaceManager : MonoBehaviour
     }
     void Update()
     {
-        if (currentStage == RaceStage.Racing)
-        {
-            foreach (Result result in results)
-            {
-                if (int.TryParse(markerCount.text, out int number))
-                    if (result.marker == number)
-                    {
-                        FinishRace();
-                    }
-            }
-        }
+        //webcamManager.NumberOfCameras = imagesParent.childCount;
+
         var dropdownlist = GameObject.Find("Dropdown List");
         if (dropdownlist != null) dropdownlist.transform.localScale = new Vector3(2, 2, 1);
         if (currentStage == RaceStage.Racing)
         {
             UpdateRaceTimer();
+            foreach (var racer in results.Where(r => !r.Finished))
+            {
+                if (racer.marker >= Convert.ToInt32(markerCount.text)* Convert.ToInt32(markerOnCircul.text))
+                {
+                    racer.Finished = true;
+                    ShowResults(racer);
+                }
+            }
+
+            // Если все игроки финишировали, завершаем гонку
+            if (results.All(r => r.Finished))
+            {
+                FinishRace();
+            }
         }
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -120,8 +126,7 @@ public class RaceManager : MonoBehaviour
     }
     public void Check(int cameraIndex)
     {
-
-        if (elapsedTime.TotalSeconds > 0)
+        if (elapsedTime.TotalSeconds > 0 && raceInProgress && !results[cameraIndex].Finished)
         {
             if (double.TryParse(detetMarkerClear.text, out double number))
             {
@@ -167,7 +172,7 @@ public class RaceManager : MonoBehaviour
         if (raceInProgress)
         {
             elapsedTime = DateTime.Now - startTime;
-            timerText.text = elapsedTime.ToString(@"hh\:mm\:ss\.fff");
+            timerText.text = elapsedTime.ToString(@"hh\:mm\:ss\:fff");
         }
     }
     
@@ -178,31 +183,46 @@ public class RaceManager : MonoBehaviour
         markerOnCircul.interactable = true;
         raceInProgress = false;
         currentStage = RaceStage.Finished;
-        ShowResults();
+
+        DisplayTopRaceResults(maxWinner);
+        foreach(var result in results)
+		{
+            raceResultsManager.AddResult(result.camName.text, result.circleTime, result.allTime);
+        }
+        raceResultsManager.SaveResults();
     }
 
-    private void ShowResults()
+    private void ShowResults(Result result)
     {
-        resultsText.text = "Гонка завершена! Время: " + elapsedTime.ToString(@"hh\:mm\:ss\.fff");
-        DisplayTopRaceResults(maxWinner);
+        result.camObject.transform.GetChild(4).gameObject.SetActive(true);
     }
     void RestartRace()
     {
         foreach (var result in results)
         {
+            result.Finished = false;
             result.resultTime.Clear();
             result.circleTime.Clear();
             result.allTime = 0;
             result.marker = 0;
-            if(raceType == TypeRace.Circuit)result.camTime.text = $"Пройдено кругов: {result.marker}/{markerCount.text}\nВремя кругов:";
-            if(raceType == TypeRace.Sprint)result.camTime.text = $"Пройдено меток: {result.marker}/{markerCount.text}";
+
+            if (raceType == TypeRace.Circuit)
+            {
+                result.camTime.text = "";
+                result.raceText.text = $"Пройдено кругов: {result.marker}/{markerCount.text}\n";
+            }
+            if (raceType == TypeRace.Sprint)
+            {
+                result.raceText.text = $"Пройдено меток: {result.marker}/{markerCount.text}";
+                result.camTime.text = "";
+            }
             result.camObject.SetActive(true);
-            result.camObject.transform.GetChild(2).gameObject.SetActive(false);
+            result.camObject.transform.GetChild(4).gameObject.SetActive(false);
         }
         currentStage = RaceStage.NotStarted;
         raceInProgress = false;
         timerText.text = "00:00:00";
-        resultsText.text = $"Готовы к новому старту!\nSpace для начала";
+        resultsText.text = $"Готовы к старту!\nSpace для начала";
         startTime = DateTime.MinValue;
         elapsedTime = TimeSpan.Zero;
         for (int i = 0; i < results.Length; i++)
@@ -233,7 +253,6 @@ public class RaceManager : MonoBehaviour
         {
             if (i < topPlaces)
             {
-                sortedResults[i].camObject.transform.GetChild(2).gameObject.SetActive(true);
                 sortedResults[i].winNomber.text = $"Место {i + 1}\nОбщее время по результатам {sortedResults[i].circleTime.Count} кругов:\n{sortedResults[i].allTime:F2} сек";
                 switch (i + 1)
                 {
@@ -253,6 +272,7 @@ public class RaceManager : MonoBehaviour
                 sortedResults[i].camObject.SetActive(false);
             }
         }
+        resultsText.text = "Гонка завершена! Время: " + elapsedTime.ToString(@"hh\:mm\:ss\:fff");
     }
 
 
@@ -267,10 +287,11 @@ public class RaceManager : MonoBehaviour
         public GameObject camObject;
         public TMP_InputField camName;
         public TMP_Text camTime;
+        public TMP_Text raceText;
         public TMP_Text winNomber;
         public Image imgResult;
         public RectTransform panelImg;
-
+        public bool Finished = false;
 
         public string GetTimeSummary()
         {
@@ -279,7 +300,7 @@ public class RaceManager : MonoBehaviour
             for (int i = 0; i < circleTime.Count; i++)
             {
                 TimeSpan timeSpan = TimeSpan.FromSeconds(circleTime[i]);
-                string formattedTime = timeSpan.ToString(@"mm\:ss\.fff");
+                string formattedTime = timeSpan.ToString(@"mm\:ss\:fff");
                 timeSummary += $"Круг {(i + 1)}: {formattedTime}\n";
             }
             return timeSummary;

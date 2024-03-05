@@ -19,7 +19,6 @@ public class WebcamManager : MonoBehaviour
             desiredCameras.AddRange(FindCameraByName(devices, "Web-camera KQ4M3FA1"));
             desiredCameras.AddRange(FindCameraByName(devices, "DroidCam Source 3"));
         }
-        NumberOfCameras = desiredCameras.Count;
         InitializeCameras(desiredCameras);
 
     }

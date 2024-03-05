@@ -14,7 +14,8 @@ public class MainController : MonoBehaviour
 
     void Update()
     {
-        uiManager.CreateCameraImages(webcamManager.NumberOfCameras);
+        if(raceManager.currentStage == RaceStage.NotStarted)uiManager.CreateCameraImages(webcamManager.NumberOfCameras);
+        if(raceManager.currentStage == RaceStage.Finished)uiManager.CreateCameraImages(raceManager.maxWinner);
 
         for (int i = 0; i < webcamManager.NumberOfCameras; i++)
         {

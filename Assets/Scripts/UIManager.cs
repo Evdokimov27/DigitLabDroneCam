@@ -17,69 +17,73 @@ public class UIManager : MonoBehaviour
     {
         foreach (RaceManager.Result r in raceManager.results)
         {
-            r.panelImg = r.camObject.transform.GetChild(3).GetComponent<RectTransform>();
-            r.imgResult = r.camObject.transform.GetChild(4).GetComponent<Image>();
+            r.panelImg = r.camObject.transform.GetChild(6).GetComponent<RectTransform>();
+            r.imgResult = r.camObject.transform.GetChild(5).GetComponent<Image>();
         }
     }
    
     private void AdjustGridLayout(int numberOfCameras)
     {
-        
         switch (numberOfCameras)
         {
             case 1:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(800, 800);
+                    gridLayoutGroup.cellSize = new Vector2(800, 600);
+
                     foreach (RaceManager.Result r in raceManager.results)
                     {
-                        r.panelImg.transform.localScale = new Vector3(0.5f, 0.5f);
+                        r.camObject.transform.localScale = new Vector2(1f, 1f);
+                        gridLayoutGroup.constraintCount = 1;
 
-                        r.imgResult.transform.localScale = new Vector2(1,1);
                     }
                     break;
                 }
             case 2:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(800, 800);
+                    gridLayoutGroup.cellSize = new Vector2(800, 600);
+
                     foreach (RaceManager.Result r in raceManager.results)
                     {
-                        r.panelImg.transform.localScale = new Vector3(0.5f, 0.5f);
+                        r.camObject.transform.localScale = new Vector2(0.7f, 0.7f);
+                        gridLayoutGroup.constraintCount = 2;
 
-                        r.imgResult.transform.localScale = new Vector2(1, 1);
                     }
                     break;
 
                 }
             case 3:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(600, 600);
+                    gridLayoutGroup.cellSize = new Vector2(575, 600);
+
                     foreach (RaceManager.Result r in raceManager.results)
                     {
-                        r.panelImg.transform.localScale = new Vector3(0.4f, 0.4f);
+                        r.camObject.transform.localScale = new Vector2(0.55f, 0.55f);
+                        gridLayoutGroup.constraintCount = 3;
 
-                        r.imgResult.transform.localScale = new Vector2(0.8f, 0.8f);
                     }
                     break;
                 }
             case 4:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(425, 425);
+                    gridLayoutGroup.cellSize = new Vector2(425, 325);
+
                     foreach (RaceManager.Result r in raceManager.results)
                     {
-                        r.panelImg.transform.localScale = new Vector3(0.3f, 0.3f);
-
-                        r.imgResult.transform.localScale = new Vector2(0.6f, 0.6f);
+                        r.camObject.transform.localScale = new Vector2(0.35f, 0.35f);
+                        gridLayoutGroup.constraintCount = 4;
                     }
                     break;
                 }
             case >4:
                 {
-                    gridLayoutGroup.cellSize = new Vector2(350, 350);
+                    gridLayoutGroup.cellSize = new Vector2(425, 315);
+
                     foreach (RaceManager.Result r in raceManager.results)
                     {
-                        r.panelImg.transform.localScale = new Vector3(0.25f, 0.25f);
 
-                        r.imgResult.transform.localScale = new Vector2(0.5f, 0.5f);
+                        r.camObject.transform.localScale = new Vector2(0.35f, 0.35f);
+                        gridLayoutGroup.constraintCount = 4;
+
                     }
                     break;
                 }
@@ -90,7 +94,7 @@ public class UIManager : MonoBehaviour
     {
         if (cameraIndex >= 0 && cameraIndex < imagesParent.childCount)
         {
-            var cameraImage = imagesParent.GetChild(cameraIndex).GetComponent<RawImage>();
+            var cameraImage = imagesParent.GetChild(cameraIndex).GetChild(1).GetComponent<RawImage>();
             if (cameraImage != null)
             {
                 cameraImage.texture = cameraFrame;

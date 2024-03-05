@@ -40,6 +40,16 @@ public class MarkerDetectionManager : MonoBehaviour
     new int[] {6, 3, 1},
     new int[] {7, 4, 2},
     };
+    List<KeyCode> keys = new List<KeyCode>() {
+    KeyCode.F1,
+    KeyCode.F2,
+    KeyCode.F3,
+    KeyCode.F4,
+    KeyCode.F5,
+    KeyCode.F6,
+    KeyCode.F7,
+    KeyCode.F8,
+};
     void Start()
     {
         correctImg = new Image[webcamManager.NumberOfCameras];
@@ -49,7 +59,7 @@ public class MarkerDetectionManager : MonoBehaviour
         for (int i = 0; i < webcamManager.NumberOfCameras; i++)
         {
             markerDetected[i] = new SerializableDictionary();
-            correctImg[i] = raceManager.results[i].camObject.transform.GetChild(4).GetComponent<Image>();
+            correctImg[i] = raceManager.results[i].camObject.transform.GetChild(5).GetComponent<Image>();
 
         }
         detectorParameters = DetectorParameters.Create();
@@ -75,6 +85,224 @@ public class MarkerDetectionManager : MonoBehaviour
         {
             markerClearTime = number / 1000;
         }
+        try
+
+
+        {
+            if (raceManager.raceInProgress && raceManager?.results[0]?.Finished == false && raceManager.results.Length > 0 && Input.GetKeyDown(keys[0]))
+            {
+                correctImg[0].color = Color.green;
+
+
+                raceManager.Check(0);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[0].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[0].marker++;
+                            raceManager.results[0].circleTime.Add(raceManager.results[0].allTime);
+                            raceManager.results[0].raceText.text = $"Пройдено кругов: {raceManager.results[0].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[0].camTime.text = raceManager.results[0].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[0].marker++;
+                    raceManager.results[0].raceText.text = $"Пройдено меток: {raceManager.results[0].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[0].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[1]?.Finished == false && raceManager.results.Length > 1 && raceManager.results[1] != null && Input.GetKeyDown(keys[1]))
+            {
+                correctImg[1].color = Color.green;
+
+
+                raceManager.Check(1);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[1].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[1].marker++;
+                            raceManager.results[1].circleTime.Add(raceManager.results[1].allTime);
+                            raceManager.results[1].raceText.text = $"Пройдено кругов: {raceManager.results[1].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[1].camTime.text = raceManager.results[1].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[1].marker++;
+                    raceManager.results[1].raceText.text = $"Пройдено меток: {raceManager.results[1].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[1].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[2]?.Finished == false && raceManager.results.Length > 2 && Input.GetKeyDown(keys[2]))
+            {
+                correctImg[2].color = Color.green;
+
+
+                raceManager.Check(2);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[2].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[2].marker++;
+                            raceManager.results[2].circleTime.Add(raceManager.results[2].allTime);
+                            raceManager.results[2].raceText.text = $"Пройдено кругов: {raceManager.results[2].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[2].camTime.text = raceManager.results[2].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[2].marker++;
+                    raceManager.results[2].raceText.text = $"Пройдено меток: {raceManager.results[2].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[2].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[3]?.Finished == false && raceManager.results.Length > 3 && Input.GetKeyDown(keys[3]))
+            {
+                correctImg[3].color = Color.green;
+
+
+                raceManager.Check(3);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[3].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[3].marker++;
+                            raceManager.results[3].circleTime.Add(raceManager.results[3].allTime);
+                            raceManager.results[3].raceText.text = $"Пройдено кругов: {raceManager.results[3].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[3].camTime.text = raceManager.results[3].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[3].marker++;
+                    raceManager.results[3].raceText.text = $"Пройдено меток: {raceManager.results[3].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[3].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[4]?.Finished == false && raceManager.results.Length > 4 && Input.GetKeyDown(keys[4]))
+            {
+                correctImg[4].color = Color.green;
+
+
+                raceManager.Check(4);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[4].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[4].marker++;
+                            raceManager.results[4].circleTime.Add(raceManager.results[4].allTime);
+                            raceManager.results[4].raceText.text = $"Пройдено кругов: {raceManager.results[4].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[4].camTime.text = raceManager.results[4].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[4].marker++;
+                    raceManager.results[4].raceText.text = $"Пройдено меток: {raceManager.results[4].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[4].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[5]?.Finished == false && raceManager.results.Length > 5 && Input.GetKeyDown(keys[5]))
+            {
+                correctImg[5].color = Color.green;
+
+
+                raceManager.Check(5);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[5].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[5].marker++;
+                            raceManager.results[5].circleTime.Add(raceManager.results[5].allTime);
+                            raceManager.results[5].raceText.text = $"Пройдено кругов: {raceManager.results[5].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[5].camTime.text = raceManager.results[5].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[5].marker++;
+                    raceManager.results[5].raceText.text = $"Пройдено меток: {raceManager.results[5].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[5].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[6]?.Finished == false && raceManager.results.Length > 6 && Input.GetKeyDown(keys[6]))
+            {
+                correctImg[6].color = Color.green;
+
+
+                raceManager.Check(6);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[6].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[6].marker++;
+                            raceManager.results[6].circleTime.Add(raceManager.results[6].allTime);
+                            raceManager.results[6].raceText.text = $"Пройдено кругов: {raceManager.results[6].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[6].camTime.text = raceManager.results[6].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[6].marker++;
+                    raceManager.results[6].raceText.text = $"Пройдено меток: {raceManager.results[6].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[6].enabled = false;
+            }
+            if (raceManager.raceInProgress && raceManager?.results[7]?.Finished == false && raceManager.results.Length > 7 && Input.GetKeyDown(keys[7]))
+            {
+                correctImg[7].color = Color.green;
+
+
+                raceManager.Check(7);
+                if (raceManager.raceType == TypeRace.Circuit)
+                {
+                    if (int.TryParse(raceManager.markerOnCircul.text, out int markerOnCircul))
+                    {
+                        if (raceManager.results[7].resultTime.Count % markerOnCircul == 0)
+                        {
+                            raceManager.results[7].marker++;
+                            raceManager.results[7].circleTime.Add(raceManager.results[7].allTime);
+                            raceManager.results[7].raceText.text = $"Пройдено кругов: {raceManager.results[7].marker}/{raceManager.markerCount.text}\n";
+                            raceManager.results[7].camTime.text = raceManager.results[7].GetTimeSummary();
+                        }
+                    }
+                }
+                if (raceManager.raceType == TypeRace.Sprint)
+                {
+                    raceManager.results[7].marker++;
+                    raceManager.results[7].raceText.text = $"Пройдено меток: {raceManager.results[7].marker}/{raceManager.markerCount.text}";
+                }
+                correctImg[7].enabled = false;
+            }
+        }
+        catch(Exception e)
+		{
+
+		}
+
     }
     private void UpdateMarkerStatus(int cameraIndex, int[] ids)
     {
@@ -133,7 +361,7 @@ public class MarkerDetectionManager : MonoBehaviour
 
             for (int markerIndex = 0; markerIndex < markerCount; markerIndex++)
             {
-                dronesImages[droneIndex].markerImages[markerIndex] = raceManager.results[droneIndex].camObject.transform.GetChild(3).GetChild(markerIndex).GetComponent<Image>();
+                dronesImages[droneIndex].markerImages[markerIndex] = raceManager.results[droneIndex].camObject.transform.GetChild(6).GetChild(markerIndex).GetComponent<Image>();
             }
         }
     }
@@ -175,7 +403,6 @@ public class MarkerDetectionManager : MonoBehaviour
                 if (zeroMarkersVisible)
                 {
                     correctImg[cameraIndex].color = Color.green;
-                    Debug.Log(cameraIndex + " Все маркеры обнаружены и очищены");
 
                     raceManager.Check(cameraIndex);
                     if (raceManager.raceType == TypeRace.Circuit)
@@ -186,15 +413,15 @@ public class MarkerDetectionManager : MonoBehaviour
                             {
                                 raceManager.results[cameraIndex].marker++;
                                 raceManager.results[cameraIndex].circleTime.Add(raceManager.results[cameraIndex].allTime);
-                                raceManager.results[cameraIndex].camTime.text = $"Пройдено кругов: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}\nВремя кругов:\n";
-                                raceManager.results[cameraIndex].camTime.text += raceManager.results[cameraIndex].GetTimeSummary();
+                                raceManager.results[cameraIndex].raceText.text = $"Пройдено кругов: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}\n";
+                                raceManager.results[cameraIndex].camTime.text = raceManager.results[cameraIndex].GetTimeSummary();
                             }
                         }
                     }
                     if (raceManager.raceType == TypeRace.Sprint)
                     {
                         raceManager.results[cameraIndex].marker++;
-                        raceManager.results[cameraIndex].camTime.text = $"Пройдено меток: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}";
+                        raceManager.results[cameraIndex].raceText.text = $"Пройдено меток: {raceManager.results[cameraIndex].marker}/{raceManager.markerCount.text}";
                     }
                     yield return new WaitForSeconds(delay / 2);
                     correctImg[cameraIndex].enabled = false;
