@@ -24,8 +24,18 @@ public class RaceResultsManager : MonoBehaviour
 
     public void AddResult(string name, List<double> circle, double time)
     {
-        currentRaceData.raceResults.Add(new RaceResult { name = name, circleTime = circle,  allTime = time });
+        var existingResult = currentRaceData.raceResults.Find(result => result.name == name);
+        if (existingResult != null)
+        {
+            existingResult.circleTime = circle;
+            existingResult.allTime = time;
+        }
+        else
+        {
+            currentRaceData.raceResults.Add(new RaceResult { name = name, circleTime = circle, allTime = time });
+        }
     }
+
 
     public void SaveResults()
     {
